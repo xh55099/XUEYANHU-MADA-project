@@ -1,0 +1,133 @@
+---
+title: "Example Manuscript Template for a Data Analysis Project"
+subtitle: ""
+author: Xueyan HU
+date: "`r Sys.Date()`"
+format:
+  docx:
+    toc: false
+    number-sections: true
+    highlight-style: github
+bibliography: dataanalysis-references.bib
+csl: apa.csl
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+The structure below is one possible setup for a data analysis project (including the course project).
+For a manuscript, adjust as needed.
+You don't need to have exactly these sections, but the content covering those sections should be addressed.
+
+This uses MS Word as output format.
+[See here](https://quarto.org/docs/output-formats/ms-word.html) for more information.
+You can switch to other formats, like html or pdf.
+See [the Quarto documentation](https://quarto.org/) for other formats.
+
+```{r, echo=FALSE, message=FALSE}
+# load a few R packages
+library(here)
+library(knitr)
+```
+
+# Summary/Abstract
+
+In this project, I will be concentrating on analyzing my own data gotten from the experiment that I carried on by my own.
+And I will be trying to figure out if there will be any relation between interested variables and observations.
+
+{{< pagebreak >}}
+
+# Introduction
+
+## General Background Information
+
+The core idea of this research comes from the following facts.
+First, sprouts are usually considered nutritious but they are consumed in raw mainly for foods like salad and sandwiches.
+Therefore, there have been a lot of foodborne pathogen outbreaks occurred across the states in the decades [@miyahira2021], which means that there is an urgent need to reduce the contamination of sprouts with foodborne pathogens.
+
+At the meantime, a recently study has revealed that a newly derived chemical could enhence the immune resistance of some certain plants to the pathogens including bacteria and virus but not by killing them directly[@manosalva2015].
+
+Based on the facts above, a hypothesis is raised that if this chemical can also be applied on seedling seeds to control the level of contamination during sprouting process.
+
+## Description of data and data source
+
+The data is obtained from experiment that I did it by myself, which has 160 observations and several variables.
+The data is the result of bacterial populations of foodborne pathogens on sprouts that are collected from different types of plants at different germinating time points under different treatments for the seeds
+
+## Questions/Hypotheses to be addressed
+
+I would like to figure out the effect of different treatments on controlling bacterial populations as well as the factors also may be related to the effectiveness, including seed type for sprouts, bacterial strain type infecting sprouts, etc.
+So the treatment type will be the most important predictor that I will focus on.
+And I am willing to explore if there is any treatment that could reduce bacterial population level on seedling sprouts.
+
+To cite other work (important everywhere, but likely happens first in introduction), make sure your references are in the bibtex file specified in the YAML header above (here `dataanalysis_template_references.bib`) and have the right bibtex key.
+Then you can include like this:
+
+Examples of reproducible research projects can for instance be found in [@mckay2020; @mckay2020a].
+
+{{< pagebreak >}}
+
+# Methods
+
+*Describe your methods. That should describe the data, the cleaning processes, and the analysis approaches. You might want to provide a shorter description here and all the details in the supplement.*
+
+## Schematic of workflow
+
+## Data aquisition
+
+*As applicable, explain where and how you got the data. If you directly import the data from an online source, you can combine this section with the next.*
+
+## Data import and cleaning
+
+*Write code that reads in the file and cleans it so it's ready for analysis. Since this will be fairly long code for most datasets, it might be a good idea to have it in one or several R scripts. If that is the case, explain here briefly what kind of cleaning/processing you do, and provide more details and well documented code somewhere (e.g. as supplement in a paper). All materials, including files that contain code, should be commented well so everyone can follow along.*
+
+## Statistical analysis
+
+*Explain anything related to your statistical analyses.*
+
+{{< pagebreak >}}
+
+# Results
+
+## Exploratory/Descriptive analysis
+
+*Use a combination of text/tables/figures to explore and describe your data. Show the most important descriptive results here. Additional ones should go in the supplement. Even more can be in the R and Quarto files that are part of your project.*
+
+## Basic statistical analysis
+
+*To get some further insight into your data, if reasonable you could compute simple statistics (e.g. simple models with 1 predictor) to look for associations between your outcome(s) and each individual predictor variable. Though note that unless you pre-specified the outcome and main exposure, any "p\<0.05 means statistical significance" interpretation is not valid.*
+
+## Full analysis
+
+*Use one or several suitable statistical/machine learning methods to analyze your data and to produce meaningful figures, tables, etc. This might again be code that is best placed in one or several separate R scripts that need to be well documented. You want the code to produce figures and data ready for display as tables, and save those. Then you load them here.*
+
+{{< pagebreak >}}
+
+# Discussion
+
+## Summary and Interpretation
+
+*Summarize what you did, what you found and what it means.*
+
+## Strengths and Limitations
+
+*Discuss what you perceive as strengths and limitations of your analysis.*
+
+## Conclusions
+
+*What are the main take-home messages?*
+
+*Include citations in your Rmd file using bibtex, the list of references will automatically be placed at the end*
+
+This paper [@leek2015] discusses types of analyses.
+
+These papers [@mckay2020; @mckay2020a] are good examples of papers published using a fully reproducible setup similar to the one shown in this template.
+
+Note that this cited reference will show up at the end of the document, the reference formatting is determined by the CSL file specified in the YAML header.
+Many more style files for almost any journal [are available](https://www.zotero.org/styles).
+You also specify the location of your bibtex reference file in the YAML.
+You can call your reference file anything you like, I just used the generic word `references.bib` but giving it a more descriptive name is probably better.
+
+{{< pagebreak >}}
+
+# References
