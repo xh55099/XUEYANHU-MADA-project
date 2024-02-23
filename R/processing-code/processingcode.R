@@ -28,6 +28,7 @@ data_location <- here::here("data","raw_data","exampledata.xlsx")
 #package::function() that's not required one could just call the function
 #specifying the package makes it clearer where the function "lives",
 #but it adds typing. You can do it either way.
+data_location <- here::here("data","raw-data","raw_data.xlsx")
 rawdata <- readxl::read_excel(data_location)
 
 # We can look in the Codebook (second tab) for a variable explanation
@@ -52,68 +53,20 @@ skimr::skim(rawdata)
 
 
 ## ---- cleandata1 --------
-# Inspecting the data, we find some problems that need addressing:
-# First, there is an entry for height which says "sixty" instead of a number. 
-# Does that mean it should be a numeric 60? It somehow doesn't make
-# sense since the weight is 60kg, which can't happen for a 60cm person (a baby)
-# Since we don't know how to fix this, we might decide to remove the person.
-# This "sixty" entry also turned all Height entries into characters instead of numeric.
-# That conversion to character also means that our summary function isn't very meaningful.
-# So let's fix that first.
-
-d1 <- rawdata %>% dplyr::filter( Height != "sixty" ) %>% 
-                  dplyr::mutate(Height = as.numeric(Height))
+# The data looks generally clear before cleaning. 
+#So I just want to make sure that "Day" could be 
+#defined as a categorical variable but not a numeric variable.
 
 
-# look at partially fixed data again
-skimr::skim(d1)
-hist(d1$Height)
+data1 <- rawdata %>%
+  mutate(Day = paste0("Day", substring(Day, 2)))
+skimr::skim(data1)
+head(data1)
 
 
-## ---- cleandata2 --------
-# Now we see that there is one person with a height of 6. 
-# that could be a typo, or someone mistakenly entered their height in feet.
-# If we don't know, we might need to remove this person.
-# But let's assume that we somehow know that this is meant to be 6 feet, so we can convert to centimeters.
-d2 <- d1 %>% dplyr::mutate( Height = replace(Height, Height=="6",round(6*30.48,0)) )
-
-
-#height values seem ok now
-skimr::skim(d2)
-
-
-## ---- cleandata3 --------
-# now let's look at weight
-# there is a person with weight of 7000, which is impossible,
-# and one person with missing weight.
-# Note that the original data had an empty cell. 
-# The codebook says that's not allowed, it should have been NA.
-# R automatically converts empty values to NA.
-# If you don't want that, you can adjust it when you load the data.
-# to be able to analyze the data, we'll remove those individuals as well.
-# Note: Some analysis methods can deal with missing values, so it's not always necessary to remove them. 
-# This should be adjusted based on your planned analysis approach. 
-d3 <- d2 %>%  dplyr::filter(Weight != 7000) %>% tidyr::drop_na()
-skimr::skim(d3)
-
-
-## ---- cleandata4 --------
-# We also want to have Gender coded as a categorical/factor variable
-# we can do that with simple base R code to mix things up
-d3$Gender <- as.factor(d3$Gender)  
-skimr::skim(d3)
-
-
-## ---- cleandata5 --------
-#now we see that there is another NA, but it's not "NA" from R 
-#instead it was loaded as character and is now considered as a category.
-#There is also an individual coded as "N" which is not allowed.
-#This could be mistyped M or a mistyped NA. If we have a good guess, we could adjust.
-#If we don't we might need to remove that individual.
-#well proceed here by removing both the NA and N individuals
-#since this keeps an empty category, I'm also using droplevels() to get rid of it
-d4 <- d3 %>% dplyr::filter( !(Gender %in% c("NA","N")) ) %>% droplevels()
-skimr::skim(d4)
+# look at partially if it is changed or not
+skimr::skim(data1)
+head(data1)
 
 
 
@@ -121,9 +74,9 @@ skimr::skim(d4)
 # all done, data is clean now. 
 # Let's assign at the end to some final variable
 # makes it easier to add steps above
-processeddata <- d4
+processeddata <- data1
 # location to save file
-save_data_location <- here::here("data","processed_data","processeddata.rds")
+save_data_location <- here::here("data","processed-data","processeddata.rds")
 saveRDS(processeddata, file = save_data_location)
 
 

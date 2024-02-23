@@ -1,7 +1,7 @@
 ---
-title: "Example Manuscript Template for a Data Analysis Project"
+title: "Examine the efficacy of ascaroside #18 in controling Escherichia Coli on alfalfa and fenugreek seeds and sprouts"
 subtitle: ""
-author: Xueyan HU
+author: Xueyan Hu
 date: "`r Sys.Date()`"
 format:
   docx:
@@ -60,24 +60,26 @@ I would like to figure out the effect of different treatments on controlling bac
 So the treatment type will be the most important predictor that I will focus on.
 And I am willing to explore if there is any treatment that could reduce bacterial population level on seedling sprouts.
 
-To cite other work (important everywhere, but likely happens first in introduction), make sure your references are in the bibtex file specified in the YAML header above (here `dataanalysis_template_references.bib`) and have the right bibtex key.
-Then you can include like this:
-
-Examples of reproducible research projects can for instance be found in [@mckay2020; @mckay2020a].
-
 {{< pagebreak >}}
 
 # Methods
 
-*Describe your methods. That should describe the data, the cleaning processes, and the analysis approaches. You might want to provide a shorter description here and all the details in the supplement.*
+Since the dataset is quite well-organized and no any value missing, the cleaning step is relatively easy.
+I only changed the category names.
+
+My main interest is to test if the chemical treatment is effective or not compared to the control treated groups.
+Also, anova model will be applied to check which variable will make significant different to the bacterial population.
+So boxplot, bar chart and line chart will be created according to the analysis direction.
 
 ## Schematic of workflow
 
 ## Data aquisition
 
-*As applicable, explain where and how you got the data. If you directly import the data from an online source, you can combine this section with the next.*
+All of the data in this dataset was collected by me in 2022 after experiment was conducted.
 
 ## Data import and cleaning
+
+The detailed raw data and processed data are stored in 'data' folder.
 
 *Write code that reads in the file and cleans it so it's ready for analysis. Since this will be fairly long code for most datasets, it might be a good idea to have it in one or several R scripts. If that is the case, explain here briefly what kind of cleaning/processing you do, and provide more details and well documented code somewhere (e.g. as supplement in a paper). All materials, including files that contain code, should be commented well so everyone can follow along.*
 

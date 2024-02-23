@@ -1,7 +1,7 @@
 ---
-title: "An example exploratory analysis script with code pulled in"
-author: "Yao Lu, Andreas Handel"
-date: "2023-03-13"
+title: "Project data cleaning"
+author: "Xueyan Hu"
+date: "2023-02-22"
 output: html_document
 ---
 
@@ -25,7 +25,7 @@ Plots produced here can be scatterplots, boxplots, violinplots, etc. Tables can 
 Load the chunk.
 
 ```{r, include=FALSE, cache=FALSE}
-knitr::read_chunk('exploratorycode.R')
+knitr::read_chunk('edacode.R')
 ```
 
 Load the packages.
@@ -55,29 +55,30 @@ We are saving the results to the `results` folder. Depending on how many tables/
 
 # Data exploration through figures
 
-Histogram plots for the continuous outcomes. 
+Seed type first: bar chart
 
-Height first.
-
-```{r,height}
+```{r,seed}
 ```
 
-Now weights.
+Then goes strain type: box plot
 
-```{r,weight}
+```{r,strain}
 ```
 
-Now height as function of weight.
+Now the effect of the treatment: bar chart with color gradient as an indicator
 
-```{r,fitfig1}
+```{r,treatment}
 ```
 
-Once more height as function of weight, stratified by gender. Note that there is so little data, it's a bit silly. But we'll plot it anyway.
+The growth trend of the bacterial population over time: scatterplot with line
 
-```{r,fitfig2}
+```{r,day}
 ```
 
+linear model applied
 
+```{r,modelfit}
+```
 
 # Notes
 

@@ -1,7 +1,7 @@
 ---
-title: "An example cleaning script with code pulled in"
-author: "Andreas Handel"
-date: "2023-01-03"
+title: "Project data cleaning"
+author: "Xueyan Hu"
+date: "2023-02-22"
 output: html_document
 ---
 
@@ -33,6 +33,7 @@ Load needed packages. Instead of having R commands here, this just pulls in the 
 ```
 
 
+
 # Data loading
 
 Note that for functions that come from specific packages (instead of base R), I often specify both package and function like so:
@@ -53,37 +54,9 @@ Several ways of looking at the data
 
 # Cleaning
 
-By inspecting the data as done above, we find some problems that need addressing:
-
-First, there is an entry for height which says "sixty" instead of a number. 
-Does that mean it should be a numeric 60? It somehow doesn't make sense since the weight is 60kg, which can't happen for a 60cm person (a baby).
-Since we don't know how to fix this, we might decide to remove the person. This "sixty" entry also turned all Height entries into characters instead of numeric. That conversion to character also means that our summary function isn't very meaningful. So let's fix that first.
+The data looks generally clear before cleaning. So I just want to make sure that "Day" could be defined as a categorical variable but not a numeric variable.
 
 ```{r, cleandata1}
-```
-
-Now we see that there is one person with a height of 6. That could be a typo, or someone mistakenly entered their height in feet. Since we unfortunately don't know, we might need to remove this person, which we'll do here.
-
-```{r, cleandata2}
-```
-
-Height values seem ok now.
-
-Now let's look at the `Weight` variable. There is a person with weight of 7000, which is impossible, and one person with missing weight.
-To be able to analyze the data, we'll remove those individuals as well.
-
-Note that removing anyone who had "faulty" or missing data is one approach. It's often not the best. Based on your question and your analysis approach, you might want to do cleaning differently (e.g. keep individuals with some missing information).
-
-
-```{r, cleandata3}
-```
-
-Now checking the `Gender` variable. 
-
-```{r, cleandata4}
-```
-
-```{r, cleandata5}
 ```
 
 
