@@ -18,27 +18,24 @@ print(summary_df)
 summarytable_file = here("starter-analysis-exercise","results", "summarytable.rds")
 saveRDS(summary_df, file = summarytable_file)
 
-## ---- height --------
-p1 <- mydata %>% ggplot(aes(x=Height)) + geom_histogram() 
-plot(p1)
-figure_file = here("starter-analysis-exercise","results","height_distribution.png")
-ggsave(filename = figure_file, plot=p1) 
 
-## ---- weight --------
+## ---- ANOVA table --------
 p2 <- mydata %>% ggplot(aes(x=Weight)) + geom_histogram() 
 plot(p2)
 figure_file = here("starter-analysis-exercise","results","weight_distribution.png")
-ggsave(filename = figure_file, plot=p2) 
-
-## ---- fitfig1 --------
-p3 <- mydata %>% ggplot(aes(x=Height, y=Weight)) + geom_point() + geom_smooth(method='lm')
-plot(p3)
-figure_file = here("starter-analysis-exercise","results","height_weight.png")
-
-## ---- fitfig2 --------
-p4 <- mydata %>% ggplot(aes(x=Height, y=Weight, color = Gender)) + geom_point() + geom_smooth(method='lm')
-plot(p4)
-figure_file = here("starter-analysis-exercise","results","height_weight_stratified.png")
-ggsave(filename = figure_file, plot=p4) 
+ggsave(filename = figure_file, plot=p2)
 
 
+## ---- LSD test --------
+# Perform LSD test
+lsd_result <- LSD.test(model1, "Treatment", alpha = 0.05)
+
+# Display the results
+print(lsd_result)
+
+# save LSD result
+
+lsdtable_file = here("results", "tables", "lsdtable.rds")
+saveRDS(lsd_result, file = lsdtable_file)
+
+ 

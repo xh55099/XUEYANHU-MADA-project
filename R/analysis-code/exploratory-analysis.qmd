@@ -74,6 +74,20 @@ linear_model <- summary(model)
 
 anovatable_file = here("results", "tables", "anovatable.rds")
 saveRDS(linear_model, file = anovatable_file)
+
+# Fit an new ANOVA model
+model1 <- aov(Selective ~ Treatment, data = mydata)
+
+# Perform LSD test
+lsd_result <- LSD.test(model1, "Treatment", alpha = 0.05)
+
+# Display the results
+print(lsd_result)
+
+# save LSD result
+
+lsdtable_file = here("results", "tables", "lsdtable.rds")
+saveRDS(lsd_result, file = lsdtable_file)
 ```
 
 

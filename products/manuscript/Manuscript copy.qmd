@@ -15,15 +15,6 @@ editor:
     wrap: sentence
 ---
 
-The structure below is one possible setup for a data analysis project (including the course project).
-For a manuscript, adjust as needed.
-You don't need to have exactly these sections, but the content covering those sections should be addressed.
-
-This uses MS Word as output format.
-[See here](https://quarto.org/docs/output-formats/ms-word.html) for more information.
-You can switch to other formats, like html or pdf.
-See [the Quarto documentation](https://quarto.org/) for other formats.
-
 ```{r, echo=FALSE, message=FALSE}
 # load a few R packages
 library(here)
@@ -73,19 +64,28 @@ So boxplot, bar chart and line chart will be created according to the analysis d
 
 ## Schematic of workflow
 
-## Data aquisition
+## Data acquisition
 
 All of the data in this dataset was collected by me in 2022 after experiment was conducted.
 
 ## Data import and cleaning
 
 The detailed raw data and processed data are stored in 'data' folder.
+And the code for data cleaning is in the 'processing-code' subfolder under 'R' folder.
+Since the name of the categories in variable "Day" is a bit confusing, I changed it to the form of day+time point0,1,3,5,7.
 
-*Write code that reads in the file and cleans it so it's ready for analysis. Since this will be fairly long code for most datasets, it might be a good idea to have it in one or several R scripts. If that is the case, explain here briefly what kind of cleaning/processing you do, and provide more details and well documented code somewhere (e.g. as supplement in a paper). All materials, including files that contain code, should be commented well so everyone can follow along.*
+And the reason why I only choose the colony count from selective media is that supportive media may have more colonies that are not specific target strain due to its ingredient feature.
+So the count from selective media could be more reliable.
 
 ## Statistical analysis
 
-*Explain anything related to your statistical analyses.*
+By fitting the data with ANOVA model, the result will show whether each independent variable has main effect to the dependent variable through the P value.
+And the summary table is stored in 'table' subfolder under 'result' folder.
+
+Then for the efficacy of chemical, a LSD test is applied and the significant level will be presented for the 4 treatments.
+
+Bar chart, box plot will show the difference of bacterial populations between 2 types of seeds, 2 types of strains, and among 4 treatments.
+As well as line graph for the bacteria growth trend during sprouting process.
 
 {{< pagebreak >}}
 
@@ -93,7 +93,54 @@ The detailed raw data and processed data are stored in 'data' folder.
 
 ## Exploratory/Descriptive analysis
 
-*Use a combination of text/tables/figures to explore and describe your data. Show the most important descriptive results here. Additional ones should go in the supplement. Even more can be in the R and Quarto files that are part of your project.*
+My main interest here is the realtionship between treatment and bacterial populations.
+Based on the ANOVA table, seed type, treatment and day are the variables that have significant effect on the dependent variables; while strain type is not.
+And there is no significant difference between 2 replications, which means the experiment mayvbe replicable.
+Furthermore, I ran a LSD test to check the significant level for each 4 treatment and got the result as follows.
+
+Table 1.
+The result of ANOVA model.
+
+| Variable  | Df  | Sum Sq | Mean Sq | F value | Pr(F)    |
+|-----------|-----|--------|---------|---------|----------|
+| Seed      | 1   | 95.8   | 95.81   | 43.287  | 7.53e-10 |
+| Strain    | 1   | 0.1    | 0.10    | 0.047   | 0.829    |
+| Treatment | 3   | 322.3  | 107.43  | 48.538  | \< 2e-16 |
+| Day       | 4   | 113.8  | 28.46   | 12.859  | 5.12e-09 |
+| Rep       | 1   | 0.4    | 0.42    | 0.190   | 0.664    |
+| Residuals | 149 | 329.8  | 2.21    |         |          |
+
+Table 2.
+Treatment summary table.
+
+| Treatment type     | Mean population | Significant level |
+|--------------------|:---------------:|-------------------|
+| Control 2          |      4.79       | a                 |
+| Control 1          |      4.49       | a                 |
+| Chemical treated 2 |      3.23       | b                 |
+| Chemical treated 1 |      1.18       | c                 |
+
+The figures created are for some basic concepts about the population difference among the categories.
+
+![](images/seed_type.png){fig-align="center" width="500"}
+
+Figure 1.
+The population difference between alfalfa and fenugreek seeds.
+
+![](images/strain_type.png){fig-align="center" width="500"}
+
+Figure 2.
+The population difference between F strain and G strain (no significant difference).
+
+![](images/treatment.png){fig-align="center" width="500"}
+
+Figure 3.
+The effect of the chemical treatment application representing by color.
+
+![](images/timepoint.png){fig-align="center" width="500" height="450"}
+
+Figure 4.
+The growth trend of bacteria population during sprouting process.
 
 ## Basic statistical analysis
 
