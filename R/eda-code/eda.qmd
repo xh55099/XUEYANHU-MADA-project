@@ -63,26 +63,20 @@ state_total <- state_total %>%
 # View the resulting dataframe
 print(state_total)
 
-# Load the map data for the US states
-us_states <- map_data("state")
-print(us_states)
+# Load usmap package and get the state data
+library(usmap)
 
-# Convert StateDesc column to lowercase
-state_total$StateDesc <- tolower(state_total$StateDesc)
+usmap_state_data <- us_map(regions = "states")
 
-# Merge the map data with the state_totals dataframe
-map_data <- merge(us_states, state_total, by.x = "region", by.y = "StateDesc", all.x = TRUE)
+# There are a few state names that are cut off in state_total, but the column
+# is already alphabetical so we can replace it.
+# To use plot_usmap() we have to have a column named `state` or `fips`.
+state_total$state <- usmap_state_data$full
+print(state_total)
 
-# Plot the map
-map <- ggplot() +
-  geom_map(data = map_data, map = map_data,
-           aes(x = long, y = lat, map_id = region, fill = TotalPrevalence),
-           color = "black", size = 0.1) +
-  scale_fill_gradient(name = "TotalPrevalence", low = "lightblue", high = "darkblue") +
-  labs(title = "Cancer Prevalence by State") +
-  theme_void() +
-  theme(legend.position = "right")
-plot(map)
+# Now we can try to make a usmap plot
+plot_usmap("states", data = state_total, values = "TotalPrevalence") +
+  scale_fill_viridis_c()
 ```
 
 # List 10 cities that has the highest cancer prevalence
@@ -119,83 +113,18 @@ We are saving the results to the `results` folder. Depending on how many tables/
 
 # fit a simple linear model
 
-```{r}
-# create boxplot of Fare by Passenger class
-bp1 <- ggplot(mydata, aes(x = as.factor(Pclass), y = Fare)) +
-  geom_boxplot() +
-  labs(title = "Boxplot of Ticket Fare by Passenger Class",
-       x = "Passenger Class",
-       y = "Fare") +
-  theme_minimal()
-plot(bp1)
-figure_file = here("results","figures", "seed_type.png")
-ggsave(filename = figure_file, plot=bp1) 
-```
-
-Then goes strain type: box plot
+Before we started analysis, we had an assumption 
 
 ```{r}
-# Create boxplot for bacterial population by 
-bp2 <- ggplot(mydata, aes(x = Strain, y = Selective)) +
-  geom_boxplot() +
-  labs(title = "The population difference by treatment",
-       x = "Strain type",
-       y = "Average Population") +
-  theme_minimal()
-plot(bp2)
-figure_file = here("results","figures", "strain_type.png")
-ggsave(filename = figure_file, plot=bp2) 
+# Fit linear regression model
+lm1 <- lm(Data_Value ~ PopulationCount, data = mydata)
+
+# Print summary of the model
+summary(lm1)
 ```
-
-Now the effect of the treatment: bar chart with color gradient as an indicator
-
-```{r}
-# Calculate average population by seed type
-mydata_treatment <- mydata %>%
-  group_by(Treatment) %>%
-  summarize(mean_Selective = mean(Selective),
-            sd_Selective = sd(Selective))
-
-# Create a continuous variable for fill
-mydata_treatment$fill_color <- scales::rescale(mydata_treatment$mean_Selective)
-
-# Create the bar chart with standard deviation lines
-bp3 <- ggplot(mydata_treatment, aes(x = Treatment, y = mean_Selective, fill = fill_color)) +
-  geom_bar(stat = "identity", position = "dodge", alpha = 0.7, width = 0.4)  +
-  geom_errorbar(data = mydata_treatment, aes(x = Treatment, ymin = mean_Selective - sd_Selective, ymax = mean_Selective + sd_Selective, color = "grey"),
-                position = position_dodge(width = 0.1), width = 0.05) +
-  labs(title = "The population difference by treatment",
-       x = "Treatment",
-       y = "Average Population") +
-  scale_fill_gradient(low = "yellow", high = "red") +  # Adjust the colors as needed
-  scale_color_manual(values = c("grey")) +  # Use grey color for error bar color
-  guides(color = "none") +  # Turn off both fill and color legends
-  theme_minimal()
-plot(bp3)
-figure_file = here("results","figures", "treatment.png")
-ggsave(filename = figure_file, plot=bp3) 
-```
+So the hypothesis is not supported by the linear model fitting result. There is no obvious evidence that the cancer prevalence in larger cities (higher population) 
 
 
-The growth trend of the bacterial population over time: scatterplot with line
-
-```{r}
-# Calculate the average population for each day
-mydata_day <- aggregate(Selective ~ Day, data = mydata, FUN = mean)
-
-# Draw a point plot
-sp4 <- ggplot(mydata_day, aes(x = Day, y = Selective)) +
-  geom_point(size = 2, color = "blue") +
-  geom_line(aes(group = 1), color = "red") +
-  labs(title = "The growth trend of the bacterial population over time",
-       x = "Day",
-       y = "Average Bacterial Population") +
-  theme_minimal()
-plot(sp4)
-figure_file = here("results","figures", "timepoint.png")
-ggsave(filename = figure_file, plot=sp4) 
-```
-```
 
 # Notes
 
