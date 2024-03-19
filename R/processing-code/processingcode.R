@@ -18,9 +18,6 @@ library(skimr) #for nice visualization of data
 library(here) #to set paths
 
 ## ---- loaddata --------
-#path to data
-#note the use of the here() package and not absolute paths
-data_location <- here::here("data","raw_data","exampledata.xlsx")
 
 #load data. 
 #note that for functions that come from specific packages (instead of base R)
@@ -28,12 +25,8 @@ data_location <- here::here("data","raw_data","exampledata.xlsx")
 #package::function() that's not required one could just call the function
 #specifying the package makes it clearer where the function "lives",
 #but it adds typing. You can do it either way.
-data_location <- here::here("data","raw-data","raw_data.xlsx")
-rawdata <- readxl::read_excel(data_location)
-
-# We can look in the Codebook (second tab) for a variable explanation
-codebook <- readxl::read_excel(data_location, sheet ="Codebook")
-print(codebook)
+data_location <- here::here("data","raw-data","500_Cities__Cancer__excluding_skin_cancer__among_adults_aged___18_years_20240314.csv")
+rawdata <- read.csv(data_location)
 
 
 ## ---- exploredata --------
@@ -52,31 +45,38 @@ skimr::skim(rawdata)
 
 
 
-## ---- cleandata1 --------
+## ---- cleandata --------
 # The data looks generally clear before cleaning. 
 #So I just want to make sure that "Day" could be 
 #defined as a categorical variable but not a numeric variable.
 
 
-data1 <- rawdata %>%
-  mutate(Day = paste0("Day", substring(Day, 2)))
-skimr::skim(data1)
-head(data1)
+# choose needed categories
+d1 <- rawdata %>%
+  filter(GeographicLevel == "City", DataValueTypeID == "CrdPrv", StateAbbr != "US")
 
+# drop uninterested variables for a smaller dataset
+d2 <- d1 %>%
+  select(Year, StateAbbr, StateDesc, CityName, DataValueTypeID, Data_Value,PopulationCount)
 
-# look at partially if it is changed or not
-skimr::skim(data1)
-head(data1)
+# generating a new variable
+d3 <- d2 %>%
+  mutate(Cancer_Case = round((Data_Value / 100) * PopulationCount))
 
-
+# re-check with the data
+dplyr::glimpse(d3)
+summary(d3)
+head(d3)
+skimr::skim(d3)
 
 ## ---- savedata --------
 # all done, data is clean now. 
 # Let's assign at the end to some final variable
 # makes it easier to add steps above
-processeddata <- data1
-# location to save file
-save_data_location <- here::here("data","processed-data","processeddata.rds")
+# name the file
+processeddata <- d3
+# location to save the file
+save_data_location <- here::here("data","processed-data","processeddata_cancer.rds")
 saveRDS(processeddata, file = save_data_location)
 
 

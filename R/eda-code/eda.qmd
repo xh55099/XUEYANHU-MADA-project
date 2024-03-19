@@ -1,5 +1,5 @@
 ---
-title: "Project data cleaning"
+title: "Project eda"
 author: "Xueyan Hu"
 date: "2023-02-22"
 output: html_document
@@ -33,6 +33,8 @@ library(here) #for data loading/saving
 library(dplyr)
 library(skimr)
 library(ggplot2)
+library(maps)
+library(gt)
 ```
 
 
@@ -40,51 +42,90 @@ Load the data.
 
 ```{r}
 #Path to data. Note the use of the here() package and not absolute paths
-data_location <- here::here("data","processed-data","processeddata.rds")
+data_location <- here::here("data","processed-data","processeddata_cancer.rds")
 #load data
 mydata <- readRDS(data_location)
 ```
 
-
-
-
-
-# Data exploration through tables
-
-Showing a bit of code to produce and save a summary table.
-
+# bar chart for crude prevalence according to states
 
 ```{r}
-summary_df = skimr::skim(mydata)
-print(summary_df)
-# save to file
-summarytable_file = here("results", "tables", "summarytable.rds")
-saveRDS(summary_df, file = summarytable_file)
+# Group by state and calculate the total population and cancer cases
+state_total <- mydata %>%
+  group_by(StateDesc) %>%
+  summarize(TotalPopulation = sum(PopulationCount),
+            TotalCancerCases = sum(Cancer_Case))
+
+# Calculate the prevalence for each state
+state_total <- state_total %>%
+  mutate(TotalPrevalence = TotalCancerCases / TotalPopulation)
+
+# View the resulting dataframe
+print(state_total)
+
+# Load the map data for the US states
+us_states <- map_data("state")
+print(us_states)
+
+# Convert StateDesc column to lowercase
+state_total$StateDesc <- tolower(state_total$StateDesc)
+
+# Merge the map data with the state_totals dataframe
+map_data <- merge(us_states, state_total, by.x = "region", by.y = "StateDesc", all.x = TRUE)
+
+# Plot the map
+map <- ggplot() +
+  geom_map(data = map_data, map = map_data,
+           aes(x = long, y = lat, map_id = region, fill = TotalPrevalence),
+           color = "black", size = 0.1) +
+  scale_fill_gradient(name = "TotalPrevalence", low = "lightblue", high = "darkblue") +
+  labs(title = "Cancer Prevalence by State") +
+  theme_void() +
+  theme(legend.position = "right")
+plot(map)
+```
+
+# List 10 cities that has the highest cancer prevalence
+
+```{r}
+top_10_highest <- mydata %>%
+  top_n(10, Data_Value) %>%
+  select(Year, StateAbbr, CityName, Data_Value)
+
+print(top_10_highest)
+
+# create a table
+table <- top_10_highest %>%
+  gt() %>%
+  tab_spanner(
+    label = md('**Year**'),
+    columns = c('Year')
+  ) %>%
+  tab_spanner(
+    label = md('**State**'),
+    columns = c('StateAbbr')
+  ) %>%
+  tab_spanner(
+    label =  md('**Cancer Prevalence**'),
+    columns = c('Data_Value')
+  ) %>%
+  tab_header(
+    title = '2017 top 10 cities which have highest cancer rates'
+  ) %>%
+  opt_stylize(style = 6, color = 'gray')
 ```
 
 We are saving the results to the `results` folder. Depending on how many tables/figures you have, it might make sense to have separate folders for each. And/or you could have separate folders for exploratory tables/figures and for final tables/figures. Just choose a setup that makes sense for your project and works for you, and provide enough documentation that someone can understand what you are doing.
 
-
-# Data exploration through figures
-
-Seed type first: bar chart
+# fit a simple linear model
 
 ```{r}
-# Calculate average population by seed type
-mydata_seed <- mydata %>%
-  group_by(Seed) %>%
-  summarize(mean_Selective = mean(Selective),
-            sd_Selective = sd(Selective))
-
-# Create the bar chart with standard deviation lines
-bp1 <- ggplot(mydata_seed, aes(x = Seed, y = mean_Selective, fill = Seed)) +
-  geom_bar(stat = "identity", position = "dodge", alpha = 0.7, width = 0.4)  +
-  geom_errorbar(data = mydata_seed, aes(x = Seed, ymin = mean_Selective - sd_Selective, ymax = mean_Selective + sd_Selective, color = "black"),
-                position = position_dodge(width = 0.1), width = 0.05) +
-  labs(title = "The population difference by seed type",
-       x = "Seed Type",
-       y = "Average Population") +
-  scale_color_manual(values = c("Alfalfa" = "lightblue", "Fenugreek" = "pink")) +
+# create boxplot of Fare by Passenger class
+bp1 <- ggplot(mydata, aes(x = as.factor(Pclass), y = Fare)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Ticket Fare by Passenger Class",
+       x = "Passenger Class",
+       y = "Fare") +
   theme_minimal()
 plot(bp1)
 figure_file = here("results","figures", "seed_type.png")

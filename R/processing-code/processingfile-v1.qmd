@@ -5,7 +5,6 @@ date: "2023-02-22"
 output: html_document
 ---
 
-
 # Processing script
 
 This contains the same code and comments/information as `processingcode.R`.
@@ -14,10 +13,9 @@ This just shows it as Quarto file, to give you an idea how to do it in a setup t
 
 See the other Quarto file for my currently preferred approach of pulling code from the R script into the Quarto file.
 
-
 # Setup
 
-Load needed packages. make sure they are installed.
+### load packages
 
 ```{r}
 library(readxl) #for loading Excel files
@@ -27,32 +25,16 @@ library(skimr) #for nice visualization of data
 library(here) #to set paths
 ```
 
-
-# Data loading
-
-Note that for functions that come from specific packages (instead of base R), I often specify both package and function like so:
-package::function() that's not required one could just call the function specifying the package makes it clearer where the function "lives",
-but it adds typing. You can do it either way.
+### loading data
 
 ```{r}
-# path to data
-# note the use of the here() package and not absolute paths
-data_location <- here::here("data","raw-data","raw_data.xlsx")
-rawdata <- readxl::read_excel(data_location)
+data_location <- here::here("data","raw-data","500_Cities__Cancer__excluding_skin_cancer__among_adults_aged___18_years_20240314.csv")
+rawdata <- read.csv(data_location)
 ```
-
-
-# Check data
-
-First we can look at the codebook
-
-```{r}
-codebook <- readxl::read_excel(data_location, sheet ="Codebook")
-print(codebook)
-```
-
 
 Several ways of looking at the data
+
+The meaning of each variable can be checked [online](https://www.kaggle.com/datasets/yasserh/titanic-dataset/data).
 
 ```{r}
 dplyr::glimpse(rawdata)
@@ -61,38 +43,51 @@ head(rawdata)
 skimr::skim(rawdata)
 ```
 
+### data cleaning
 
-
-# Cleaning
-
-The data looks generally clear before cleaning. So I just want to make sure that "Day" could be defined as a categorical variable but not a numeric variable.
+First, only crude prevalence is interested since we don't know the age structure here. And the prevalence of each city is the summary of all the census tracts from this city, so City will be selected only for further analysis. There are also 2 summed data including all the US prevalence that will not be used for analysis.
 
 ```{r}
-data1 <- rawdata %>%
-  mutate(Day = paste0("Day", substring(Day, 2)))
-skimr::skim(data1)
-head(data1)
+d1 <- rawdata %>%
+  filter(GeographicLevel == "City", DataValueTypeID == "CrdPrv", StateAbbr != "US")
+```
+
+Dropping uninterested variables for a smaller dataset.
+
+```{r}
+d2 <- d1 %>%
+  select(Year, StateAbbr, StateDesc, CityName, DataValueTypeID, Data_Value,PopulationCount)
+```
+
+Generating a new variable in case it will be needed later.
+
+```{r}
+d3 <- d2 %>%
+  mutate(Cancer_Case = round((Data_Value / 100) * PopulationCount))
 ```
 
 
-# Save data 
-
-Finally, we save the clean data as RDS file. I suggest you save your processed and cleaned data as RDS or RDA/Rdata files. 
-This preserves coding like factors, characters, numeric, etc.  If you save as CSV, that information would get lost.
-However, CSV is better for sharing with others since it's plain text. If you do CSV, you might want to write down somewhere what each variable is.
-
-See here for some suggestions on how to store your processed data:
-http://www.sthda.com/english/wiki/saving-data-into-r-data-format-rds-and-rdata
+Re-check with the data
 
 ```{r}
-processeddata <- data1
-save_data_location <- here::here("data","processed-data","processeddata.rds")
+dplyr::glimpse(d3)
+summary(d3)
+head(d3)
+skimr::skim(d3)
+```
+
+### Save data
+
+Finally, we save the clean data as RDS file. I suggest you save your processed and cleaned data as RDS or RDA/Rdata files. This preserves coding like factors, characters, numeric, etc. If you save as CSV, that information would get lost. However, CSV is better for sharing with others since it's plain text. If you do CSV, you might want to write down somewhere what each variable is.
+
+See here for some suggestions on how to store your processed data: http://www.sthda.com/english/wiki/saving-data-into-r-data-format-rds-and-rdata
+
+```{r}
+processeddata <- d3
+save_data_location <- here::here("data","processed-data","processeddata_cancer.rds")
 saveRDS(processeddata, file = save_data_location)
 ```
-
-
 
 # Notes
 
 Removing anyone who had "faulty" or missing data is one approach. It's often not the best. based on your question and your analysis approach, you might want to do cleaning differently (e.g. keep individuals with some missing information).
-
