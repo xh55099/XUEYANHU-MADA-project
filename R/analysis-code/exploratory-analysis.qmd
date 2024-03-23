@@ -1,7 +1,7 @@
 ---
 title: "An example exploratory analysis script"
-author: "Andreas Handel"
-date: "10/28/2021"
+author: "Xueyan Hu"
+date: "03/22/2024"
 output: html_document
 ---
 
@@ -47,51 +47,59 @@ mydata <- readRDS(data_location)
 
 
 
-# Data exploration through tables
+# fit simple linear model
 
-Showing a bit of code to produce and save a summary table.
+First, I am curious that if physical activity could be correlated to the choice of transportation since I have heard a theory that if someone take much effort on commute transportation, they tend to spend less time on exercise.
 
 
 ```{r}
-summary_df = skimr::skim(mydata)
-print(summary_df)
-# save to file
-summarytable_file = here("results", "tables", "summarytable.rds")
-saveRDS(summary_df, file = summarytable_file)
+# Fit multinomial logistic regression model
+#library(nnet)
+#multinom_model <- multinom(FAF ~ MTRANS, data = mydata)
+
+# Summary of the model
+#summary(multinom_model)
 ```
+I will try to figure it out later how I could make it fitting.
 
 
-linear model applied
+Then, I would like to see how drinking water plus physical activity affect obesity.
 
 ```{r}
-# Fit the ANOVA model
-model <- aov(Selective ~ Seed + Strain + Treatment + Day + Rep, data = mydata)
+# linear model of BMI by water and FAF
+lm1 <- lm(BMI ~ Water + FAF + Water * FAF, data = mydata)
+lm1_result <- summary(lm1)
 
-# Summarize the ANOVA results
-linear_model <- summary(model)
-
-# Save this table
-
-anovatable_file = here("results", "tables", "anovatable.rds")
-saveRDS(linear_model, file = anovatable_file)
-
-# Fit an new ANOVA model
-model1 <- aov(Selective ~ Treatment, data = mydata)
-
-# Perform LSD test
-lsd_result <- LSD.test(model1, "Treatment", alpha = 0.05)
-
-# Display the results
-print(lsd_result)
-
-# save LSD result
-
-lsdtable_file = here("results", "tables", "lsdtable.rds")
-saveRDS(lsd_result, file = lsdtable_file)
+# save the result
+lm_file = here("results", "tables", "lm1table.rds")
+saveRDS(lm1_result, file = lm_file)
 ```
 
+In addition, I want to fit model for alcohol consumption and obesity level.
 
+```{r}
+mydata$Alcohol <- as.factor(mydata$Alcohol)
+lm2 <- lm(BMI ~ Alcohol, data = mydata)
+lm2_result <- summary(lm2)
 
+# save the result
+lm_file = here("results", "tables", "lm2table.rds")
+saveRDS(lm2_result, file = lm_file)
+```
+I think it makes a little bit sense to me that there is a connection effect of water and physical activity on BMI, which might be supportive for what we learn that drinking more water and doing more exercise will lower the risk of obesity.
+
+Last, I will try to use all predictors that I believe may affect BMI to fit a model.
+
+```{r}
+mydata1 <- mydata %>%
+  select(History, Water, Alcohol, FAF, MTRANS, BMI)
+lm3 <- lm(BMI ~ ., data = mydata1)
+lm3_result <- summary(lm3)
+
+# save the result
+lm_file = here("results", "tables", "lm3table.rds")
+saveRDS(lm3_result, file = lm_file)
+```
 # Notes
 
 For your own explorations, tables and figures can be "quick and dirty". As long as you can see what's going on, there is no need to polish them. That's in contrast to figures you'll produce for your final products (paper, report, presentation, website, etc.). Those should look as nice, polished and easy to understand as possible.

@@ -11,96 +11,73 @@ data_location <- here::here("data","processed-data","processeddata.rds")
 #load data
 mydata <- readRDS(data_location)
 
-## ---- table1 --------
-summary_df = skimr::skim(mydata)
-print(summary_df)
-# save to file
-summarytable_file = here("results", "tables", "summarytable.rds")
-saveRDS(summary_df, file = summarytable_file)
+## ---- p1 to p3 --------
+# Convert numeric values to labels
+mydata$Gender <- ifelse(mydata$Gender == 1, "Male", "Female")
 
-## ---- seed --------
-# Calculate average population by seed type
-mydata_seed <- mydata %>%
-  group_by(Seed) %>%
-  summarize(mean_Selective = mean(Selective),
-            sd_Selective = sd(Selective))
-
-# Create the bar chart with standard deviation lines
-bp1 <- ggplot(mydata_seed, aes(x = Seed, y = mean_Selective, fill = Seed)) +
-  geom_bar(stat = "identity", position = "dodge", alpha = 0.7, width = 0.4)  +
-  geom_errorbar(data = mydata_seed, aes(x = Seed, ymin = mean_Selective - sd_Selective, ymax = mean_Selective + sd_Selective, color = "black"),
-                position = position_dodge(width = 0.1), width = 0.05) +
-  labs(title = "The population difference by seed type",
-       x = "Seed Type",
-       y = "Average Population") +
-  scale_color_manual(values = c("Alfalfa" = "lightblue", "Fenugreek" = "pink")) +
+# bar chart of gender distribution
+bc1 <- ggplot(mydata, aes(x = Gender)) +
+  geom_bar(fill = c("pink", "skyblue"), color = "black", width = 0.5) +
+  geom_text(stat = 'count', aes(label=..count..), vjust = -0.5, size=3, color="black") +
+  labs(x = "Gender", y = "Count", title = "Bar Chart of Gender Distribution") +
   theme_minimal()
-plot(bp1)
-figure_file = here("results","figures", "seed_type.png")
-ggsave(filename = figure_file, plot=bp1) 
+plot(bc1)
 
-## ---- strain --------
-# Create boxplot for bacterial population by 
-bp2 <- ggplot(mydata, aes(x = Strain, y = Selective)) +
-  geom_boxplot() +
-  labs(title = "The population difference by treatment",
-       x = "Strain type",
-       y = "Average Population") +
+# histogram of population by age
+hp2 <- ggplot(mydata, aes(x = Age)) +
+  geom_histogram(binwidth = 5, fill = "grey", color = "black") +
+  labs(x = "Age", y = "Count", title = "Histogram of Age distribution") +
+  stat_bin(binwidth = 5, geom = "text", aes(label = ..count..),
+           vjust = -0.5, color = "black", size = 3)  +
   theme_minimal()
-plot(bp2)
-figure_file = here("results","figures", "strain_type.png")
-ggsave(filename = figure_file, plot=bp2) 
-
-## ---- treatment --------
-# Calculate average population by seed type
-mydata_treatment <- mydata %>%
-  group_by(Treatment) %>%
-  summarize(mean_Selective = mean(Selective),
-            sd_Selective = sd(Selective))
-
-# Create a continuous variable for fill
-mydata_treatment$fill_color <- scales::rescale(mydata_treatment$mean_Selective)
-
-# Create the bar chart with standard deviation lines
-bp3 <- ggplot(mydata_treatment, aes(x = Treatment, y = mean_Selective, fill = fill_color)) +
-  geom_bar(stat = "identity", position = "dodge", alpha = 0.7, width = 0.4)  +
-  geom_errorbar(data = mydata_treatment, aes(x = Treatment, ymin = mean_Selective - sd_Selective, ymax = mean_Selective + sd_Selective, color = "grey"),
-                position = position_dodge(width = 0.1), width = 0.05) +
-  labs(title = "The population difference by treatment",
-       x = "Treatment",
-       y = "Average Population") +
-  scale_fill_gradient(low = "yellow", high = "red") +  # Adjust the colors as needed
-  scale_color_manual(values = c("grey")) +  # Use grey color for error bar color
-  guides(color = "none") +  # Turn off both fill and color legends
+plot(hp2)
+# bar chart of obesity level distribution
+bc3 <- ggplot(mydata, aes(x = Obesity)) +
+  geom_bar() +
+  geom_text(stat = 'count', aes(label=..count..), vjust = -0.5, size=3, color="black") +
+  scale_x_discrete(labels = c("Under", "Normal", "OW1", "OW2", "Obese1", "Obese2", "Obese3")) +
+  labs(x = "Obesity level", y = "Count", title = "Bar Chart of obesity Distribution") +
   theme_minimal()
-plot(bp3)
-figure_file = here("results","figures", "treatment.png")
-ggsave(filename = figure_file, plot=bp3) 
+plot(bc3)
 
-## ---- day --------
-# Calculate the average population for each day
-mydata_day <- aggregate(Selective ~ Day, data = mydata, FUN = mean)
-
-# Draw a point plot
-sp4 <- ggplot(mydata_day, aes(x = Day, y = Selective)) +
-  geom_point(size = 2, color = "blue") +
-  geom_line(aes(group = 1), color = "red") +
-  labs(title = "The growth trend of the bacterial population over time",
-       x = "Day",
-       y = "Average Bacterial Population") +
+## ---- p4 and p5 --------
+unique(mydata$Obesity)
+# obesity level by gender
+sbp4 <- ggplot(mydata, aes(x = Obesity, fill = Gender)) +
+  geom_bar(position = "stack") +
+  labs(x = "Obesity Level", y = "Count", title = "Gender Distribution by Obesity Level") +
+  scale_fill_manual(values = c("skyblue", "pink"), labels = c("Male", "Female")) +
+  scale_x_discrete(labels = c("Under", "Normal", "OW1", "OW2", "Obese1", "Obese2", "Obese3")) +
   theme_minimal()
-plot(sp4)
-figure_file = here("results","figures", "timepoint.png")
-ggsave(filename = figure_file, plot=sp4)  
+plot(sbp4)
 
-## ---- modelfit --------
-# Fit the ANOVA model
-model <- aov(Selective ~ Seed + Strain + Treatment + Day + Rep, data = mydata)
+# Obesity level by age
+# Categorize age into groups
+mydata <- mydata %>%
+  mutate(Age_Group = cut(Age, breaks = c(0, 20, 30, 40, 50, 60, 70, Inf),
+                         labels = c("0-20", "21-30", "31-40", "41-50", "51-60", "61-70", "71+")))
 
-# Summarize the ANOVA results
-linear_model <- summary(model)
+sbp5 <- ggplot(mydata, aes(x = Obesity, fill = Age_Group)) +
+  geom_bar(position = "stack",stat = "count") +
+  coord_flip() + # Rotate the plot to make it horizontal
+  labs(x = "Obesity level", y = "Count", title = "Stacked Bar Chart of Obesity Level by Age") +
+  theme_minimal()
+plot(sbp5)
 
-# Save this table
+## ---- p6 --------
+vp6 <-ggplot(mydata, aes(x = History, y = BMI, fill = History)) +
+  geom_violin() +  # Add violin geometry
+  geom_boxplot(width = 0.1, fill = "white", color = "black") +  # Add boxplot for better visualization
+  geom_jitter(aes(color = History), width = 0.2, alpha = 0.5, size = 1) +   # Add jittered scatterplot
+  labs(x = "Family History of Obesity", y = "BMI", title = "Violin Plot of BMI by History of Obesity") +
+  scale_fill_manual(values = c("yes" = "lightyellow", "no" = "lightgreen")) +  # Define colors
+  theme_minimal()
+plot(vp6)
 
-anovatable_file = here("results", "tables", "anovatable.rds")
-saveRDS(linear_model, file = anovatable_file)
+## ---- table --------
+#summary1 <- summary(mydata)
+summary2 <-skim(mydata)
+summarytable_file = here("results", "tables", "summarytable1.rds")
+saveRDS(summary1, file = summarytable_file)
+summarytable_file = here("results", "tables", "summarytable2.rds")
+saveRDS(summary2, file = summarytable_file)

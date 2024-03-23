@@ -1,6 +1,15 @@
 This folder contains code to do some simple exploratory analysis on the processed/cleaned data.
 The code produces a few tables and figures, which are saved in the `results` folder.
 
+The exploratory-analysis file include the simple linear model fitting fot the dataset.
+1. Commute transportation as predictor and physical activity as an outcome but needs more time to figure out.
+2. Both water consumption and physical activity as predictors and BMI as an outcome.
+3. BMI vs. alcohol consumption
+4. BMI vs. all predictors that I choose including commute transportation, family history, water consumption and alcohol consumption.
+
+
+
+Note:
 It's the same code done 3 times:
 
 * First, there is an R script that you can run which does all the computations.

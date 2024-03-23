@@ -11,31 +11,41 @@ data_location <- here::here("starter-analysis-exercise","data","processed-data",
 #load data
 mydata <- readRDS(data_location)
 
-## ---- table1 --------
-summary_df = skimr::skim(mydata)
-print(summary_df)
-# save to file
-summarytable_file = here("starter-analysis-exercise","results", "summarytable.rds")
-saveRDS(summary_df, file = summarytable_file)
+## ---- logistic --------
+# Fit multinomial logistic regression model
+#library(nnet)
+#multinom_model <- multinom(FAF ~ MTRANS, data = mydata)
+
+# Summary of the model
+#summary(multinom_model)
 
 
-## ---- ANOVA table --------
-p2 <- mydata %>% ggplot(aes(x=Weight)) + geom_histogram() 
-plot(p2)
-figure_file = here("starter-analysis-exercise","results","weight_distribution.png")
-ggsave(filename = figure_file, plot=p2)
+## ---- lm1 --------
+# linear model of BMI by water and FAF
+lm1 <- lm(BMI ~ Water + FAF + Water * FAF, data = mydata)
+lm1_result <- summary(lm1)
+
+# save the result
+lm_file = here("results", "tables", "lm1table.rds")
+saveRDS(lm1_result, file = lm_file)
 
 
-## ---- LSD test --------
-# Perform LSD test
-lsd_result <- LSD.test(model1, "Treatment", alpha = 0.05)
+## ---- lm2 --------
+mydata$Alcohol <- as.factor(mydata$Alcohol)
+lm2 <- lm(BMI ~ Alcohol, data = mydata)
+lm2_result <- summary(lm2)
 
-# Display the results
-print(lsd_result)
+# save the result
+lm_file = here("results", "tables", "lm2table.rds")
+saveRDS(lm2_result, file = lm_file)
 
-# save LSD result
+## ---- lm3 --------
+mydata1 <- mydata %>%
+  select(History, Water, Alcohol, FAF, MTRANS, BMI)
+lm3 <- lm(BMI ~ ., data = mydata1)
+lm3_result <- summary(lm3)
 
-lsdtable_file = here("results", "tables", "lsdtable.rds")
-saveRDS(lsd_result, file = lsdtable_file)
-
+# save the result
+lm_file = here("results", "tables", "lm3table.rds")
+saveRDS(lm3_result, file = lm_file)
  

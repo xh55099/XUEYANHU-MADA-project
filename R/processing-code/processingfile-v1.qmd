@@ -28,10 +28,17 @@ library(here) #to set paths
 ### loading data
 
 ```{r}
-data_location <- here::here("data","raw-data","500_Cities__Cancer__excluding_skin_cancer__among_adults_aged___18_years_20240314.csv")
+data_location <- here::here("data","raw-data","ObesityDataSet_raw_and_data_sinthetic.csv")
 rawdata <- read.csv(data_location)
 ```
 
+
+#### check on codebook
+
+```{r}
+codebook <- here::here("data","raw-data","codebook.xlsx")
+read_excel(codebook)
+```
 Several ways of looking at the data
 
 The meaning of each variable can be checked [online](https://www.kaggle.com/datasets/yasserh/titanic-dataset/data).
@@ -45,36 +52,34 @@ skimr::skim(rawdata)
 
 ### data cleaning
 
-First, only crude prevalence is interested since we don't know the age structure here. And the prevalence of each city is the summary of all the census tracts from this city, so City will be selected only for further analysis. There are also 2 summed data including all the US prevalence that will not be used for analysis.
+First generating a new variable BMI using height and weight, as well as change some variable names and categorical levels.
 
 ```{r}
 d1 <- rawdata %>%
-  filter(GeographicLevel == "City", DataValueTypeID == "CrdPrv", StateAbbr != "US")
+  mutate(BMI = Weight / (Height)^2) %>%
+  rename(History = family_history_with_overweight, Water = CH2O, Alcohol = CALC, Obesity = NObeyesdad) %>%
+  mutate(Gender = if_else(Gender == "Male", 1, 2))
+
+d2 <- d1 %>% 
+  mutate(Alcohol = case_when(
+    Alcohol == "no" ~ 1,
+    Alcohol == "Sometimes" ~ 2,
+    Alcohol == "Frequently" ~ 3,
+    Alcohol == "Always" ~ 4,
+    TRUE ~ NA_integer_  # Handle any other cases
+  ))
+# Print the updated dataframe
+head(d2)
 ```
 
-Dropping uninterested variables for a smaller dataset.
-
-```{r}
-d2 <- d1 %>%
-  select(Year, StateAbbr, StateDesc, CityName, DataValueTypeID, Data_Value,PopulationCount)
-```
-
-Generating a new variable in case it will be needed later.
+My interest variables are gender, age, alcohol consumption, water drinking, transportation, physical activity, and outcomes will be obesity level and BMI.
 
 ```{r}
 d3 <- d2 %>%
-  mutate(Cancer_Case = round((Data_Value / 100) * PopulationCount))
-```
-
-
-Re-check with the data
-
-```{r}
-dplyr::glimpse(d3)
-summary(d3)
+  select(Gender, Age, History, Water, Alcohol, FAF, MTRANS,BMI, Obesity)
 head(d3)
-skimr::skim(d3)
 ```
+
 
 ### Save data
 
@@ -84,7 +89,7 @@ See here for some suggestions on how to store your processed data: http://www.st
 
 ```{r}
 processeddata <- d3
-save_data_location <- here::here("data","processed-data","processeddata_cancer.rds")
+save_data_location <- here::here("data","processed-data","processeddata.rds")
 saveRDS(processeddata, file = save_data_location)
 ```
 

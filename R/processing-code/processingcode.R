@@ -25,9 +25,12 @@ library(here) #to set paths
 #package::function() that's not required one could just call the function
 #specifying the package makes it clearer where the function "lives",
 #but it adds typing. You can do it either way.
-data_location <- here::here("data","raw-data","500_Cities__Cancer__excluding_skin_cancer__among_adults_aged___18_years_20240314.csv")
+data_location <- here::here("data","raw-data","ObesityDataSet_raw_and_data_sinthetic.csv")
 rawdata <- read.csv(data_location)
 
+#check on codebook
+codebook <- here::here("data","raw-data","codebook.xlsx")
+read_excel(codebook)
 
 ## ---- exploredata --------
 #take a look at the data
@@ -51,23 +54,28 @@ skimr::skim(rawdata)
 #defined as a categorical variable but not a numeric variable.
 
 
-# choose needed categories
+# generated new variable
 d1 <- rawdata %>%
-  filter(GeographicLevel == "City", DataValueTypeID == "CrdPrv", StateAbbr != "US")
+  mutate(BMI = Weight / (Height)^2) %>%
+  rename(History = family_history_with_overweight, Water = CH2O, Alcohol = CALC, Obesity = NObeyesdad) %>%
+  mutate(Gender = if_else(Gender == "Male", 1, 2))
 
-# drop uninterested variables for a smaller dataset
-d2 <- d1 %>%
-  select(Year, StateAbbr, StateDesc, CityName, DataValueTypeID, Data_Value,PopulationCount)
+#rename variable and category
+d2 <- d1 %>% 
+  mutate(Alcohol = case_when(
+    Alcohol == "no" ~ 1,
+    Alcohol == "Sometimes" ~ 2,
+    Alcohol == "Frequently" ~ 3,
+    Alcohol == "Always" ~ 4,
+    TRUE ~ NA_integer_  # Handle any other cases
+  ))
+#Print the updated dataframe
+head(d2)
 
-# generating a new variable
+#Select variables
 d3 <- d2 %>%
-  mutate(Cancer_Case = round((Data_Value / 100) * PopulationCount))
-
-# re-check with the data
-dplyr::glimpse(d3)
-summary(d3)
+  select(Gender, Age, History, Water, Alcohol, FAF, MTRANS,BMI, Obesity)
 head(d3)
-skimr::skim(d3)
 
 ## ---- savedata --------
 # all done, data is clean now. 

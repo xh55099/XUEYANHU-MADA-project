@@ -1,5 +1,5 @@
 ---
-title: "Examine the efficacy of ascaroside #18 in controling Escherichia Coli on alfalfa and fenugreek seeds and sprouts"
+title: "Explore the factors that may be associated with obesity"
 subtitle: ""
 author: Xueyan Hu
 date: "`r Sys.Date()`"
@@ -23,8 +23,7 @@ library(knitr)
 
 # Summary/Abstract
 
-In this project, I will be concentrating on analyzing my own data gotten from the experiment that I carried on by my own.
-And I will be trying to figure out if there will be any relation between interested variables and observations.
+In this project, I have found......
 
 {{< pagebreak >}}
 
@@ -32,60 +31,66 @@ And I will be trying to figure out if there will be any relation between interes
 
 ## General Background Information
 
-The core idea of this research comes from the following facts.
-First, sprouts are usually considered nutritious but they are consumed in raw mainly for foods like salad and sandwiches.
-Therefore, there have been a lot of foodborne pathogen outbreaks occurred across the states in the decades [@miyahira2021], which means that there is an urgent need to reduce the contamination of sprouts with foodborne pathogens.
+[Obesity](https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight)![]() is a chronic complex disease defined by excessive fat deposits that can impair health.
+Obesity can lead to increased risk of type 2 diabetes and heart disease, it can affect bone health and reproduction, it increases the risk of certain cancers.
 
-At the meantime, a recently study has revealed that a newly derived chemical could enhence the immune resistance of some certain plants to the pathogens including bacteria and virus but not by killing them directly[@manosalva2015].
+In the recent decades, obesity has become a more and more common and severe problem across the world.
 
-Based on the facts above, a hypothesis is raised that if this chemical can also be applied on seedling seeds to control the level of contamination during sprouting process.
+Worldwide adult obesity has more than doubled since 1990, and adolescent obesity has quadrupled.
+In 2022, 1 in 8 people in the world were living with obesity.
+
+There is no doubt that obesity is a multifactorial disease due to obesogenic environments, psycho-social factors and genetic variants in most cases, but personal behavior could also has correlation with the result of overweight and obesity.
+
+There is a lot of discussion on the Internet and social media about fitness and weight loss, and people assume that physical activity can lose weight as a fact.
+Also KOLs ususally encourage people to drink more water for higher metabolic levels.
+But I have not seen a clear data to prove it.
+At the same time, the effect of physical activity to lose weight is also different from person to person.
+
+In addition, according to what I learned from nutrition course, alcohol consumption may be related to weight gain because [alcohol metabolism](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6527027/) and carbohydrate metabolism both go through the same pathway/cycle in the middle and late stages.
 
 ## Description of data and data source
 
-The data is obtained from experiment that I did it by myself, which has 160 observations and several variables.
-The data is the result of bacterial populations of foodborne pathogens on sprouts that are collected from different types of plants at different germinating time points under different treatments for the seeds
+The data is obtained from a website [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/544/estimation+of+obesity+levels+based+on+eating+habits+and+physical+condition) which have collected the survey results of individuals from the countries of Mexico, Peru and Colombia on their eating habits and physical condition, as well as their estimation of obesity levels.
 
 ## Questions/Hypotheses to be addressed
 
-I would like to figure out the effect of different treatments on controlling bacterial populations as well as the factors also may be related to the effectiveness, including seed type for sprouts, bacterial strain type infecting sprouts, etc.
-So the treatment type will be the most important predictor that I will focus on.
-And I am willing to explore if there is any treatment that could reduce bacterial population level on seedling sprouts.
+I would like to figure out if higher frequency of physical activity and drinking more water could keep people away from obesity and whether heredity is an important factor for obesity.
+Also, I will focus on the relationship between alcohol consumption frequency and obesity level.
 
 {{< pagebreak >}}
 
 # Methods
 
-Since the dataset is quite well-organized and no any value missing, the cleaning step is relatively easy.
-I only changed the category names.
+Data cleaning including generating necessary variable, renaming categories and variables and so on.
 
-My main interest is to test if the chemical treatment is effective or not compared to the control treated groups.
-Also, anova model will be applied to check which variable will make significant different to the bacterial population.
-So boxplot, bar chart and line chart will be created according to the analysis direction.
+First to take a deeper look of the data, I would like to do some descriptive analysis including bar chart, boxplot, scatterplot etc. to indicate the distribution of the data.
+
+Then simple linear fit will be applied to explore the relationship between variables and outcomes (both categorical and numeric).
+
+Prediction will be made.
 
 ## Schematic of workflow
 
 ## Data acquisition
 
-All of the data in this dataset was collected by me in 2022 after experiment was conducted.
+The dataset presents the results of a survey on the topic of obesity including personal physical conditions and answers to behavioral questions.
 
 ## Data import and cleaning
 
 The detailed raw data and processed data are stored in 'data' folder.
 And the code for data cleaning is in the 'processing-code' subfolder under 'R' folder.
-Since the name of the categories in variable "Day" is a bit confusing, I changed it to the form of day+time point0,1,3,5,7.
 
-And the reason why I only choose the colony count from selective media is that supportive media may have more colonies that are not specific target strain due to its ingredient feature.
-So the count from selective media could be more reliable.
+Obesity level is a categorical variable defined by BMI range, so BMI as a new variable is created and it could be analyzed as a numeric variable.
+Also, to make the variable name easy to understand, I changed some abbreviated names to ones with fully spelled key words.
+Male is replaced by 1 and female by 2 under Gender variable for more convenient further analysis.
 
 ## Statistical analysis
 
-By fitting the data with ANOVA model, the result will show whether each independent variable has main effect to the dependent variable through the P value.
+Bar chart, box plot will show the distribution of obesity level by different variables, as well as the population features of the people under investigation.
+All figures will be saved in 'figure' subfolder under 'result' folder and shown in the manuscript.
+
+By fitting the data with simple linear model, the result will show whether each independent variable has main effect to the dependent variable through the P value.
 And the summary table is stored in 'table' subfolder under 'result' folder.
-
-Then for the efficacy of chemical, a LSD test is applied and the significant level will be presented for the 4 treatments.
-
-Bar chart, box plot will show the difference of bacterial populations between 2 types of seeds, 2 types of strains, and among 4 treatments.
-As well as line graph for the bacteria growth trend during sprouting process.
 
 {{< pagebreak >}}
 
@@ -93,58 +98,44 @@ As well as line graph for the bacteria growth trend during sprouting process.
 
 ## Exploratory/Descriptive analysis
 
-My main interest here is the realtionship between treatment and bacterial populations.
-Based on the ANOVA table, seed type, treatment and day are the variables that have significant effect on the dependent variables; while strain type is not.
-And there is no significant difference between 2 replications, which means the experiment mayvbe replicable.
-Furthermore, I ran a LSD test to check the significant level for each 4 treatment and got the result as follows.
-
-Table 1.
-The result of ANOVA model.
-
-| Variable  | Df  | Sum Sq | Mean Sq | F value | Pr(F)    |
-|-----------|-----|--------|---------|---------|----------|
-| Seed      | 1   | 95.8   | 95.81   | 43.287  | 7.53e-10 |
-| Strain    | 1   | 0.1    | 0.10    | 0.047   | 0.829    |
-| Treatment | 3   | 322.3  | 107.43  | 48.538  | \< 2e-16 |
-| Day       | 4   | 113.8  | 28.46   | 12.859  | 5.12e-09 |
-| Rep       | 1   | 0.4    | 0.42    | 0.190   | 0.664    |
-| Residuals | 149 | 329.8  | 2.21    |         |          |
-
-Table 2.
-Treatment summary table.
-
-| Treatment type     | Mean population | Significant level |
-|--------------------|:---------------:|-------------------|
-| Control 2          |      4.79       | a                 |
-| Control 1          |      4.49       | a                 |
-| Chemical treated 2 |      3.23       | b                 |
-| Chemical treated 1 |      1.18       | c                 |
-
-The figures created are for some basic concepts about the population difference among the categories.
-
-![](images/seed_type.png){fig-align="center" width="500"}
+Bar chart shows that the genders of the cohort under investigation are balanced.
 
 Figure 1.
-The population difference between alfalfa and fenugreek seeds.
+Gender distribution.
 
-![](images/strain_type.png){fig-align="center" width="500"}
+![](images/gender-distribution.png)
+
+It can be seen that almost two thirds of the people are identified with over weight.
 
 Figure 2.
-The population difference between F strain and G strain (no significant difference).
+Obesity level distribution.
 
-![](images/treatment.png){fig-align="center" width="500"}
+![](images/obesity-distribution.png)
+
+There is no obvious pattern of obesity levels by gender.
 
 Figure 3.
-The effect of the chemical treatment application representing by color.
+Gender distribution in each obesity levels.
 
-![](images/timepoint.png){fig-align="center" width="500" height="450"}
+![](images/obesity%20level%20by%20gender.png)
+
+It is apparent that people with family obesity history may tend to be over weight according to figure 4 below.
 
 Figure 4.
-The growth trend of bacteria population during sprouting process.
+Violin plot of BMI by family obesity history.
+
+![](images/obesity level by family history-02.png)
 
 ## Basic statistical analysis
 
-*To get some further insight into your data, if reasonable you could compute simple statistics (e.g. simple models with 1 predictor) to look for associations between your outcome(s) and each individual predictor variable. Though note that unless you pre-specified the outcome and main exposure, any "p\<0.05 means statistical significance" interpretation is not valid.*
+Since some obvious relationship could be shown in figures, I choose other variables as predictors in exploratory analysis
+
+First, I would like to fit linear model for BMI by both water consumption and physical activity.
+And the result indicates that there is a connection effect between them two, which means that both of them contribution to obesity control.
+
+Also, I use single indicator, alcohol consumption and BMI as an outcome to fit linear model.
+
+In the last model I select all the variables that I think may have effect on BMI as predictors and BMI as outcome.
 
 ## Full analysis
 
@@ -163,6 +154,8 @@ The growth trend of bacteria population during sprouting process.
 *Discuss what you perceive as strengths and limitations of your analysis.*
 
 ## Conclusions
+
+**Haven't updated yet but will do it later!!!**
 
 *What are the main take-home messages?*
 
