@@ -108,23 +108,33 @@ Gender distribution.
 It can be seen that almost two thirds of the people are identified with over weight.
 
 Figure 2.
+Age distribution
+
+![](images/age-distribution.png)
+
+Figure 3.
 Obesity level distribution.
 
 ![](images/obesity-distribution.png)
 
 There is no obvious pattern of obesity levels by gender.
 
-Figure 3.
+Figure 4.
 Gender distribution in each obesity levels.
 
 ![](images/obesity%20level%20by%20gender.png)
 
 It is apparent that people with family obesity history may tend to be over weight according to figure 4 below.
 
-Figure 4.
+Figure 5.
+Age distribution in each obesity levels.
+
+![](images/obesity level by age.png)
+
+Figure 6.
 Violin plot of BMI by family obesity history.
 
-![](images/obesity level by family history-02.png)
+![](images/obesity level by family history-01.png)
 
 ## Basic statistical analysis
 

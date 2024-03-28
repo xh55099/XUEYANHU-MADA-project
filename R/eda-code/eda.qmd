@@ -134,10 +134,14 @@ We are saving the results to the `results` folder. Depending on how many tables/
 ```{r}
 figure_file = here("results","figures","gender-distribution.png")
 ggsave(filename = figure_file, plot=bc1) 
+figure_file = here("results","figures","age-distribution.png")
+ggsave(filename = figure_file, plot=hp2) 
 figure_file = here("results","figures","obesity-distribution.png")
 ggsave(filename = figure_file, plot=bc3) 
 figure_file = here("results","figures","obesity level by geder.png")
 ggsave(filename = figure_file, plot=sbp4) 
+figure_file = here("results","figures","obesity level by age.png")
+ggsave(filename = figure_file, plot=sbp5)
 figure_file = here("results","figures","obesity level by family history.png")
 ggsave(filename = figure_file, plot=vp6) 
 ```
