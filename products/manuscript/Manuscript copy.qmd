@@ -129,12 +129,12 @@ It is apparent that people with family obesity history may tend to be over weigh
 Figure 5.
 Age distribution in each obesity levels.
 
-![](images/obesity level by age.png)
+![](images/obesity%20level%20by%20age.png)
 
 Figure 6.
 Violin plot of BMI by family obesity history.
 
-![](images/obesity level by family history-01.png)
+![](images/obesity%20level%20by%20family%20history-01.png)
 
 ## Basic statistical analysis
 

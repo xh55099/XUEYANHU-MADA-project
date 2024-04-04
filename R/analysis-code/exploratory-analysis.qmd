@@ -69,6 +69,7 @@ Then, I would like to see how drinking water plus physical activity affect obesi
 # linear model of BMI by water and FAF
 lm1 <- lm(BMI ~ Water + FAF + Water * FAF, data = mydata)
 lm1_result <- summary(lm1)
+lm1_result
 
 # save the result
 lm_file = here("results", "tables", "lm1table.rds")
@@ -88,18 +89,218 @@ saveRDS(lm2_result, file = lm_file)
 ```
 I think it makes a little bit sense to me that there is a connection effect of water and physical activity on BMI, which might be supportive for what we learn that drinking more water and doing more exercise will lower the risk of obesity.
 
-Last, I will try to use all predictors that I believe may affect BMI to fit a model.
+I haven't include gender or age for model fitting, I will try to combine them in one model here.
 
 ```{r}
-mydata1 <- mydata %>%
-  select(History, Water, Alcohol, FAF, MTRANS, BMI)
-lm3 <- lm(BMI ~ ., data = mydata1)
-lm3_result <- summary(lm3)
+lm4 <- lm(BMI ~ Gender * Age, data = mydata)
+lm4_result <- summary(lm4)
+lm4_result
 
 # save the result
 lm_file = here("results", "tables", "lm3table.rds")
 saveRDS(lm3_result, file = lm_file)
 ```
+
+This linear model proves gender and age can also be predictors for BMI and there is interaction between them. So I will include them in the all predictor model.
+
+
+Last, I will try to use all predictors that I believe may affect BMI to fit a model.
+
+```{r}
+lm3 <- lm(BMI ~ Gender + Age + History + Water + Alcohol + FAF + MTRANS, data = mydata)
+lm3_result <- summary(lm3)
+lm3_result
+
+# save the result
+lm_file = here("results", "tables", "lm3table.rds")
+saveRDS(lm3_result, file = lm_file)
+```
+
+Choose predictors only important for the model fitting. Thanks to my classmates' replies, I received some useful suggestion for choosing predictors, which are chi-square, LASSO and lowest RMSE. 
+According to my searching result online, chi-square is good for categorical variable as outcome, and LASSO might shrink the coefficients too much. So I will go with the lowest RMSE in the following and see what will happen next.
+
+```{r}
+# Load necessary packages
+library(caret)
+
+# Split data into training and testing sets
+set.seed(123)  # Set seed for reproducibility
+trainIndex <- createDataPartition(mydata$BMI, p = 0.8, list = FALSE)
+trainData <- mydata[trainIndex, ]
+testData <- mydata[-trainIndex, ]
+
+# find important predictors without interactions
+
+# Define predictors
+predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
+
+# Initialize variables to store results
+minRMSE1 <- Inf
+bestSubset1 <- NULL
+
+# Iterate through all possible combinations of predictors
+for (i in 1:length(predictors)) {
+  subsets <- combn(predictors, i)
+  for (j in 1:ncol(subsets)) {
+    predictors_subset <- subsets[, j]
+    
+    # Fit model using subset of predictors
+    formula <- paste("BMI ~", paste(predictors_subset, collapse = " + "))
+    model <- lm(formula, data = trainData)
+    
+    # Make predictions on test set
+    predictions <- predict(model, newdata = testData)
+    
+    # Calculate RMSE
+    RMSE1 <- sqrt(mean((testData$BMI - predictions)^2))
+    
+    # Update minRMSE and bestSubset if RMSE is lower
+    if (RMSE1 < minRMSE1) {
+      minRMSE1 <- RMSE1
+      bestSubset1 <- predictors_subset
+    }
+  }
+}
+
+# Print results
+print(paste("Best subset of predictors:", paste(bestSubset1, collapse = ", ")))
+print(paste("Lowest RMSE:", minRMSE1))
+```
+
+
+```{r}
+# Define predictors and response variable
+predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
+interaction_terms <- c("Gender_Age", "FAF_Water")  # Define interaction terms
+response <- "BMI"
+
+# Create interaction terms in training and testing data
+trainData$Gender_Age <- trainData$Gender * trainData$Age
+trainData$FAF_Water <- trainData$FAF * trainData$Water
+
+testData$Gender_Age <- testData$Gender * testData$Age
+testData$FAF_Water <- testData$FAF * testData$Water
+
+# Update list of predictors to include interaction terms
+predictors_updated <- c(predictors, "Gender_Age", "FAF_Water")
+
+# Initialize variables to store results
+minRMSE2 <- Inf
+bestSubset2 <- NULL
+
+# Iterate through all possible combinations of predictors
+for (i in 1:length(predictors_updated)) {
+  subsets <- combn(predictors_updated, i)
+  for (j in 1:ncol(subsets)) {
+    predictors_subset <- subsets[, j]
+    
+    # Fit model using subset of predictors
+    formula <- paste("BMI ~", paste(predictors_subset, collapse = " + "))
+    model <- lm(formula, data = trainData)
+    
+    # Make predictions on test set
+    predictions <- predict(model, newdata = testData)
+    
+    # Calculate RMSE
+    RMSE2 <- sqrt(mean((testData$BMI - predictions)^2))
+    
+    # Update minRMSE and bestSubset if RMSE is lower
+    if (RMSE2 < minRMSE2) {
+      minRMSE2 <- RMSE2
+      bestSubset2 <- predictors_subset
+    }
+  }
+}
+
+# Print results
+print(paste("Best subset of predictors (including interactions):", paste(bestSubset2, collapse = ", ")))
+print(paste("Lowest RMSE (including interactions):", minRMSE2))
+```
+
+It is under my expectation that all-predictor model with the 2 interactions has the lowest RMSE. So I also would like to try LASSO regression model here and see the result.
+
+```{r}
+# Load necessary packages
+library(glmnet)
+library(caret)
+
+# Set seed for reproducibility
+set.seed(123)
+
+# Define predictors and response variable
+predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
+response <- "BMI"
+
+# Prepare data
+x <- model.matrix(as.formula(paste(response, "~", paste(predictors, collapse = "+"))), data = mydata)[, -1]  # Exclude intercept column
+y <- mydata[, response]
+
+# Fit LASSO regression model using cross-validation
+lasso_model <- cv.glmnet(x, y, alpha = 1, nfolds = 10)  # Use alpha = 1 for LASSO regression
+
+# Extract optimal lambda value
+best_lambda <- lasso_model$lambda.min
+
+# Extract coefficients of predictors for the optimal lambda
+coef <- coef(lasso_model, s = best_lambda)
+
+# Identify non-zero coefficients (selected predictors)
+selected_predictors1 <- rownames(coef)[coef != 0]
+
+# Print selected predictors
+print(paste("Selected predictors:", paste(selected_predictors1, collapse = ", ")))
+```
+
+
+```{r}
+# Fit LASSO regression model using cross-validation with interaction terms
+x <- model.matrix(as.formula(paste(response, "~", paste(predictors_updated, collapse = "+"))), data = mydata)[, -1]  # Exclude intercept column
+y <- mydata[, response]
+lasso_model <- cv.glmnet(x, y, alpha = 1, nfolds = 10)  # Use alpha = 1 for LASSO regression
+
+# Extract optimal lambda value
+best_lambda <- lasso_model$lambda.min
+
+# Extract coefficients of predictors for the optimal lambda
+coef <- as.matrix(coef(lasso_model, s = "lambda.min"))
+
+# Identify non-zero coefficients (selected predictors)
+selected_predictors <- rownames(coef)[coef != 0]
+
+# Print selected predictors
+print(paste("Selected predictors (including interactions):", paste(selected_predictors, collapse = ", ")))
+```
+
+The LASSO regression result includes some specific levels in variables instead of the entire variables. 
+
+Using CV to test evaluate the model with all predictors.
+
+```{r}
+# Define predictors and response variable
+predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
+interaction_terms <- c("Gender_Age", "FAF_Water")
+response <- "BMI"
+
+# Define training control with repeated k-fold cross-validation
+train_control <- trainControl(method = "repeatedcv", 
+                              number = 10,       # Number of folds
+                              repeats = 3)       # Number of repetitions
+
+# Define the model formula
+formula <- as.formula(paste(response, "~", paste(c(predictors, interaction_terms), collapse = " + ")))
+
+# Train the model using cross-validation
+model <- train(formula,
+               data = mydata,
+               method = "lm",                    # Use linear regression
+               trControl = train_control,       # Use defined training control
+               preProcess = c("center", "scale"),  # Preprocess data
+               metric = "RMSE")                    # Use RMSE as the metric
+
+# Print the cross-validation results
+print(model)
+```
+
 # Notes
 
 For your own explorations, tables and figures can be "quick and dirty". As long as you can see what's going on, there is no need to polish them. That's in contrast to figures you'll produce for your final products (paper, report, presentation, website, etc.). Those should look as nice, polished and easy to understand as possible.
