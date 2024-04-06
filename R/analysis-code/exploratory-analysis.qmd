@@ -50,17 +50,34 @@ mydata <- readRDS(data_location)
 # fit simple linear model
 
 First, I am curious that if physical activity could be correlated to the choice of transportation since I have heard a theory that if someone take much effort on commute transportation, they tend to spend less time on exercise.
-
+First I want to use number to represent the type of transportation. Walking requires most energy consumption, then it goes with public transportation and automobile is the least.
 
 ```{r}
-# Fit multinomial logistic regression model
-#library(nnet)
-#multinom_model <- multinom(FAF ~ MTRANS, data = mydata)
+# Define a function to map transportation modes to numeric values
+map_transport <- function(transport_mode) {
+  if (transport_mode == "Walking") {
+    return(4)
+  } else if (transport_mode == "Motorbike") {
+    return(2)
+  } else if (transport_mode == "Public_Transportation") {
+    return(3)
+  } else if (transport_mode == "Automobile") {
+    return(1)
+  } else {
+    return(0)  # Return 0 for other cases
+  }
+}
 
-# Summary of the model
-#summary(multinom_model)
+# Apply the function to create the new variable
+mydata$MTRANSn <- sapply(mydata$MTRANS, map_transport)
+
+# Calculate correlation coefficient
+correlation <- cor(mydata$FAF, mydata$MTRANSn)
+
+# Print correlation coefficient
+print(correlation)
 ```
-I will try to figure it out later how I could make it fitting.
+Since the correlation coefficient is close to zero, there is almost no linear association between them. So this result doesn't really support the theory that I have heard from social media.
 
 
 Then, I would like to see how drinking water plus physical activity affect obesity.
@@ -140,24 +157,24 @@ bestSubset1 <- NULL
 
 # Iterate through all possible combinations of predictors
 for (i in 1:length(predictors)) {
-  subsets <- combn(predictors, i)
-  for (j in 1:ncol(subsets)) {
-    predictors_subset <- subsets[, j]
+  subsets1 <- combn(predictors, i)
+  for (j in 1:ncol(subsets1)) {
+    predictors_subset1 <- subsets1[, j]
     
     # Fit model using subset of predictors
-    formula <- paste("BMI ~", paste(predictors_subset, collapse = " + "))
-    model <- lm(formula, data = trainData)
+    formula_lm1 <- paste("BMI ~", paste(predictors_subset1, collapse = " + "))
+    model_lm1 <- lm(formula_lm1, data = trainData)
     
     # Make predictions on test set
-    predictions <- predict(model, newdata = testData)
+    predictions_lm1 <- predict(model_lm1, newdata = testData)
     
     # Calculate RMSE
-    RMSE1 <- sqrt(mean((testData$BMI - predictions)^2))
+    RMSE1 <- sqrt(mean((testData$BMI - predictions_lm1)^2))
     
     # Update minRMSE and bestSubset if RMSE is lower
     if (RMSE1 < minRMSE1) {
       minRMSE1 <- RMSE1
-      bestSubset1 <- predictors_subset
+      bestSubset1 <- predictors_subset1
     }
   }
 }
@@ -190,24 +207,24 @@ bestSubset2 <- NULL
 
 # Iterate through all possible combinations of predictors
 for (i in 1:length(predictors_updated)) {
-  subsets <- combn(predictors_updated, i)
-  for (j in 1:ncol(subsets)) {
-    predictors_subset <- subsets[, j]
+  subsets2 <- combn(predictors_updated, i)
+  for (j in 1:ncol(subsets2)) {
+    predictors_subset2 <- subsets2[, j]
     
     # Fit model using subset of predictors
-    formula <- paste("BMI ~", paste(predictors_subset, collapse = " + "))
-    model <- lm(formula, data = trainData)
+    formula_lm2 <- paste("BMI ~", paste(predictors_subset2, collapse = " + "))
+    model_lm2 <- lm(formula_lm2, data = trainData)
     
     # Make predictions on test set
-    predictions <- predict(model, newdata = testData)
+    predictions_lm2 <- predict(model_lm2, newdata = testData)
     
     # Calculate RMSE
-    RMSE2 <- sqrt(mean((testData$BMI - predictions)^2))
+    RMSE2 <- sqrt(mean((testData$BMI - predictions_lm2)^2))
     
     # Update minRMSE and bestSubset if RMSE is lower
     if (RMSE2 < minRMSE2) {
       minRMSE2 <- RMSE2
-      bestSubset2 <- predictors_subset
+      bestSubset2 <- predictors_subset2
     }
   }
 }
@@ -235,40 +252,17 @@ response <- "BMI"
 x <- model.matrix(as.formula(paste(response, "~", paste(predictors, collapse = "+"))), data = mydata)[, -1]  # Exclude intercept column
 y <- mydata[, response]
 
-# Fit LASSO regression model using cross-validation
-lasso_model <- cv.glmnet(x, y, alpha = 1, nfolds = 10)  # Use alpha = 1 for LASSO regression
+# Define number of folds for cross-validation
+nfolds <- 10
 
-# Extract optimal lambda value
-best_lambda <- lasso_model$lambda.min
+# Perform cross-validation
+cv_model <- cv.glmnet(x, y, alpha = 1, nfolds = nfolds)  # Use alpha = 1 for LASSO regression
 
-# Extract coefficients of predictors for the optimal lambda
-coef <- coef(lasso_model, s = best_lambda)
-
-# Identify non-zero coefficients (selected predictors)
-selected_predictors1 <- rownames(coef)[coef != 0]
+# Extract selected predictors
+selected_predictors <- rownames(coef(cv_model, s = "lambda.min"))[-1]  # Exclude intercept column
 
 # Print selected predictors
-print(paste("Selected predictors:", paste(selected_predictors1, collapse = ", ")))
-```
-
-
-```{r}
-# Fit LASSO regression model using cross-validation with interaction terms
-x <- model.matrix(as.formula(paste(response, "~", paste(predictors_updated, collapse = "+"))), data = mydata)[, -1]  # Exclude intercept column
-y <- mydata[, response]
-lasso_model <- cv.glmnet(x, y, alpha = 1, nfolds = 10)  # Use alpha = 1 for LASSO regression
-
-# Extract optimal lambda value
-best_lambda <- lasso_model$lambda.min
-
-# Extract coefficients of predictors for the optimal lambda
-coef <- as.matrix(coef(lasso_model, s = "lambda.min"))
-
-# Identify non-zero coefficients (selected predictors)
-selected_predictors <- rownames(coef)[coef != 0]
-
-# Print selected predictors
-print(paste("Selected predictors (including interactions):", paste(selected_predictors, collapse = ", ")))
+print(paste("Selected predictors:", paste(selected_predictors, collapse = ", ")))
 ```
 
 The LASSO regression result includes some specific levels in variables instead of the entire variables. 
@@ -282,15 +276,15 @@ interaction_terms <- c("Gender_Age", "FAF_Water")
 response <- "BMI"
 
 # Define training control with repeated k-fold cross-validation
-train_control <- trainControl(method = "repeatedcv", 
+train_control1 <- trainControl(method = "repeatedcv", 
                               number = 10,       # Number of folds
                               repeats = 3)       # Number of repetitions
 
 # Define the model formula
-formula <- as.formula(paste(response, "~", paste(c(predictors, interaction_terms), collapse = " + ")))
+formula_CV <- as.formula(paste(response, "~", paste(c(predictors, interaction_terms), collapse = " + ")))
 
 # Train the model using cross-validation
-model <- train(formula,
+model <- train(formula_CV,
                data = mydata,
                method = "lm",                    # Use linear regression
                trControl = train_control,       # Use defined training control
@@ -299,6 +293,143 @@ model <- train(formula,
 
 # Print the cross-validation results
 print(model)
+```
+
+I will also try to use obesity level which is categorical variable so I can use DA models to fit the data and might compare the result with linear models. There are totally 7 categories classified by the original authors of the dataset.
+
+```{r}
+library(MASS)
+library(caret)
+
+# Define the outcome variable
+outcome <- "Obesity"
+
+# Define predictor variables
+predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
+
+# Create a training/testing split
+set.seed(123)  # Set seed for reproducibility
+trainIndex3 <- createDataPartition(mydata$Obesity, p = 0.8, list = FALSE)
+trainData3 <- mydata[trainIndex, ]
+testData3 <- mydata[-trainIndex, ]
+
+# Initialize variables to store results
+best_subset_DA <- NULL
+best_accuracy_DA <- 0
+
+# Iterate through all possible combinations of predictors
+for (i in 1:length(predictors)) {
+  subsets3 <- combn(predictors, i)
+  for (j in 1:ncol(subsets3)) {
+    predictors_subset_DA <- subsets3[, j]
+    
+    # Fit the DA model using the subset of predictors
+    formula_DA <- as.formula(paste(outcome, "~", paste(predictors_subset_DA, collapse = " + ")))
+    model_DA <- lda(formula_DA, data = trainData3)
+    
+    # Make predictions on the testing set
+    predicted_DA <- predict(model_DA, newdata = testData3)$class
+    
+    # Calculate accuracy
+    accuracy_DA <- mean(predicted_DA == testData3$Obesity)
+    
+    # Update best subset and accuracy if current accuracy is higher
+    if (accuracy_DA > best_accuracy_DA) {
+      best_subset_DA <- predictors_subset_DA
+      best_accuracy_DA <- accuracy_DA
+    }
+  }
+}
+
+# Print the best subset of predictors and accuracy
+print(paste("Best subset of predictors:", paste(best_subset_DA, collapse = ", ")))
+print(paste("Best accuracy:", best_accuracy_DA))
+```
+
+Adding 2 interactions to the DA model.
+
+```{r}
+# Define the outcome variable
+outcome <- "Obesity"
+
+# Update list of predictors to include interaction terms
+predictors_updated <- c(predictors, "Gender_Age", "FAF_Water")
+
+# Create a training/testing split
+set.seed(123)  # Set seed for reproducibility
+trainIndex4 <- createDataPartition(mydata$Obesity, p = 0.8, list = FALSE)
+trainData4 <- mydata[trainIndex, ]
+testData4 <- mydata[-trainIndex, ]
+
+# Create interaction terms in training and testing data
+trainData4$Gender_Age <- trainData4$Gender * trainData4$Age
+trainData4$FAF_Water <- trainData4$FAF * trainData4$Water
+
+testData4$Gender_Age <- testData4$Gender * testData4$Age
+testData4$FAF_Water <- testData4$FAF * testData4$Water
+
+# Initialize variables to store results
+best_subset_DA_U <- NULL
+best_accuracy_DA_U <- 0
+
+# Iterate through all possible combinations of predictors
+for (i in 1:length(predictors_updated)) {
+  subsets4 <- combn(predictors_updated, i)
+  for (j in 1:ncol(subsets4)) {
+    predictors_subset_DA_U <- subsets4[, j]
+    
+    # Fit the DA model using the subset of predictors
+    formula_DA_U <- as.formula(paste(outcome, "~", paste(predictors_subset_DA_U, collapse = " + ")))
+    model_DA_U <- lda(formula_DA_U, data = trainData4)
+    
+    # Make predictions on the testing set
+    predicted_DA_U <- predict(model_DA_U, newdata = testData4)$class
+    
+    # Calculate accuracy
+    accuracy_DA_U <- mean(predicted_DA_U == testData4$Obesity)
+    
+    # Update best subset and accuracy if current accuracy is higher
+    if (accuracy_DA_U > best_accuracy_DA_U) {
+      best_subset_DA_U <- predictors_subset_DA_U
+      best_accuracy_DA_U <- accuracy_DA_U
+    }
+  }
+}
+
+# Print the best subset of predictors and accuracy
+print(paste("Best subset of predictors:", paste(best_subset_DA_U, collapse = ", ")))
+print(paste("Best accuracy:", best_accuracy_DA_U))
+```
+After adding 2 interactions, the accuracy increased a little bit.
+
+Using cross validation to evaluate the model.
+
+```{r}
+# Define predictors and response variable
+mydata$Obesity <- factor(mydata$Obesity)
+predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
+interaction_terms <- c("Gender_Age", "FAF_Water")
+outcome <- "Obesity"
+
+# Define the model formula
+formula_CV_DA <- as.formula(paste(outcome, "~", paste(c(predictors, interaction_terms), collapse = " + ")))
+
+# Define training control with repeated k-fold cross-validation
+train_control2 <- trainControl(method = "repeatedcv", 
+                               number = 10,            # Number of folds
+                               repeats = 3,            # Number of repetitions
+                               classProbs = TRUE,      # Compute class probabilities
+                               summaryFunction = twoClassSummary)  # Use two-class summary
+
+# Fit the DA model using cross-validation
+lda_model <- train(formula = formula_CV_DA,
+                   data = mydata,
+                   method = "lda",             # Use LDA method
+                   trControl = train_control2,  # Use defined training control
+                   metric = "Accuracy",        # Use accuracy as the metric
+                   preProcess = c("center", "scale")) # Preprocess data
+
+print(lda_model)
 ```
 
 # Notes
