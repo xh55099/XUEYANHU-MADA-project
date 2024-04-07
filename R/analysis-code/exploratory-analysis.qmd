@@ -33,6 +33,8 @@ library(here) #for data loading/saving
 library(dplyr)
 library(skimr)
 library(ggplot2)
+library(tidymodels)
+library(discrim)
 ```
 
 
@@ -182,6 +184,43 @@ for (i in 1:length(predictors)) {
 # Print results
 print(paste("Best subset of predictors:", paste(bestSubset1, collapse = ", ")))
 print(paste("Lowest RMSE:", minRMSE1))
+
+# calculate null model
+
+# Compute the mean BMI from the training data
+mean_bmi_train <- mean(trainData$BMI)
+
+# Create a vector of predicted values equal to the mean BMI from training data
+predicted_bmi_test <- rep(mean_bmi_train, nrow(testData))
+
+# Compute RMSE (Root Mean Squared Error) on test data
+rmse_null_test <- sqrt(mean((testData$BMI - predicted_bmi_test)^2))
+
+# Print the results
+print(paste("Null Model RMSE on Test Data:", rmse_null_test))
+```
+```{r}
+# Create a data frame for plotting
+plot_data1 <- data.frame(Observed = testData$BMI, 
+                        Predicted_All = predictions_lm1,
+                        Predicted_Null = predicted_bmi_test)
+
+# Plot using ggplot
+p1 <- ggplot(plot_data1, aes(x = Observed, y = Predicted_All)) +
+  geom_point(color = "blue", size = 2, shape = 16) +
+  geom_point(aes(y = Predicted_Null), color = "green", size = 2, shape = 16) +
+  geom_abline(intercept = 0, slope = 1, color = "red") +
+  labs(x = "Observed BMI", y = "Predicted BMI", title = "Observed vs Predicted BMI") +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  scale_shape_manual(values = c(16, 16)) +
+  scale_color_manual(values = c("blue", "green")) +
+  guides(color = guide_legend(title = "Model"))
+plot(p1)
+
+# save the plot
+figure_file = here("results","figures","Observed-Predicted1 .png")
+ggsave(filename = figure_file, plot=p1) 
 ```
 
 
@@ -234,6 +273,29 @@ print(paste("Best subset of predictors (including interactions):", paste(bestSub
 print(paste("Lowest RMSE (including interactions):", minRMSE2))
 ```
 
+```{r}
+# Create a data frame for plotting
+plot_data2 <- data.frame(Observed = testData$BMI, 
+                        Predicted_All = predictions_lm2,
+                        Predicted_Null = predicted_bmi_test)
+
+# Plot using ggplot
+p2 <- ggplot(plot_data2, aes(x = Observed, y = Predicted_All)) +
+  geom_point(color = "red", size = 2, shape = 16) +
+  geom_point(aes(y = Predicted_Null), color = "yellow", size = 2, shape = 16) +
+  geom_abline(intercept = 0, slope = 1, color = "black") +
+  labs(x = "Observed BMI", y = "Predicted BMI", title = "Observed vs Predicted BMI with interactions") +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  scale_shape_manual(values = c(16, 16)) +
+  scale_color_manual(values = c("red", "yellow")) +
+  guides(color = guide_legend(title = "Model"))
+plot(p2)
+# save the plot
+figure_file = here("results","figures","Observed-Predicted2 .png")
+ggsave(filename = figure_file, plot=p2) 
+```
+
 It is under my expectation that all-predictor model with the 2 interactions has the lowest RMSE. So I also would like to try LASSO regression model here and see the result.
 
 ```{r}
@@ -275,6 +337,10 @@ predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
 interaction_terms <- c("Gender_Age", "FAF_Water")
 response <- "BMI"
 
+# Create interaction terms in data
+mydata$Gender_Age <- mydata$Gender * mydata$Age
+mydata$FAF_Water <- mydata$FAF * mydata$Water
+
 # Define training control with repeated k-fold cross-validation
 train_control1 <- trainControl(method = "repeatedcv", 
                               number = 10,       # Number of folds
@@ -287,7 +353,7 @@ formula_CV <- as.formula(paste(response, "~", paste(c(predictors, interaction_te
 model <- train(formula_CV,
                data = mydata,
                method = "lm",                    # Use linear regression
-               trControl = train_control,       # Use defined training control
+               trControl = train_control1,       # Use defined training control
                preProcess = c("center", "scale"),  # Preprocess data
                metric = "RMSE")                    # Use RMSE as the metric
 
@@ -414,22 +480,33 @@ outcome <- "Obesity"
 # Define the model formula
 formula_CV_DA <- as.formula(paste(outcome, "~", paste(c(predictors, interaction_terms), collapse = " + ")))
 
-# Define training control with repeated k-fold cross-validation
-train_control2 <- trainControl(method = "repeatedcv", 
-                               number = 10,            # Number of folds
-                               repeats = 3,            # Number of repetitions
-                               classProbs = TRUE,      # Compute class probabilities
-                               summaryFunction = twoClassSummary)  # Use two-class summary
+# Set seed for reproducibility
+set.seed(1234)
 
-# Fit the DA model using cross-validation
-lda_model <- train(formula = formula_CV_DA,
-                   data = mydata,
-                   method = "lda",             # Use LDA method
-                   trControl = train_control2,  # Use defined training control
-                   metric = "Accuracy",        # Use accuracy as the metric
-                   preProcess = c("center", "scale")) # Preprocess data
+# Create 10-fold cross-validation folds
+new_folds <- vfold_cv(mydata, v = 10)
 
-print(lda_model)
+# Define model specification
+lda_spec <- discrim_linear() %>%
+  set_engine("MASS") %>%
+  set_mode("classification")
+
+# Workflow for model with specified predictors
+lda_model <- workflow() %>%
+  add_model(lda_spec) %>%
+  add_formula(formula_CV_DA)
+
+# Workflow for model using all predictors
+lda_wf <- workflow() %>%
+  add_model(lda_spec) %>%
+  add_formula(formula_CV_DA)
+
+# Perform CV model training and evaluation
+lda_CV <- lda_wf %>%
+  fit_resamples(resamples = new_folds, metrics = metric_set(accuracy))
+
+# Collect RMSE values
+collect_metrics(lda_CV)
 ```
 
 # Notes

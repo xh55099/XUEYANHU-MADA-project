@@ -23,7 +23,11 @@ library(knitr)
 
 # Summary/Abstract
 
-In this project, I have found......
+Obesity is a chronic complex disease which may increase the risk of severe health issues and even cancers.
+And the condition of obesity in real life could be related to physical behaviors.
+The project is exploring the potential factors that might be related to obesity level using machine learning models.
+The data analysis result has shown that age, gender, family history, drinking water, physical activity, and commute transportation are all predictors for obesity level, which is represented by individual BMI.
+As for the outcome, when linear model is fit to data which has BMI as continuous variable, the performance is better than using obesity level as categorical variable.
 
 {{< pagebreak >}}
 
@@ -79,6 +83,8 @@ The dataset presents the results of a survey on the topic of obesity including p
 
 The detailed raw data and processed data are stored in 'data' folder.
 And the code for data cleaning is in the 'processing-code' subfolder under 'R' folder.
+
+I made a code book based on the article reporting this dataset [@PALECHOR2019104344] first before doing any cleaning.
 
 Obesity level is a categorical variable defined by BMI range, so BMI as a new variable is created and it could be analyzed as a numeric variable.
 Also, to make the variable name easy to understand, I changed some abbreviated names to ones with fully spelled key words.
@@ -138,9 +144,12 @@ Violin plot of BMI by family obesity history.
 
 ## Basic statistical analysis
 
-Since some obvious relationship could be shown in figures, I choose other variables as predictors in exploratory analysis
+Since some obvious relationship could be shown in figures, I choose other variables as predictors in exploratory analysis.
 
-First, I would like to fit linear model for BMI by both water consumption and physical activity.
+First, I was curious that whether there is a negative correlation between transportation type and physical activity frequency, I converted transportation types into numbers indicating the energy consuming levels from 1 (lowest automobile) to 4 (highest walking).
+Then I used correlation function to calculate the coefficient for these two variable but it was pretty low (0.0059).
+
+Then, I would like to fit linear model for BMI by both water consumption and physical activity.
 And the result indicates that there is a connection effect between them two, which means that both of them contribution to obesity control.
 
 Also, I use single indicator, alcohol consumption and BMI as an outcome to fit linear model.
@@ -149,7 +158,25 @@ In the last model I select all the variables that I think may have effect on BMI
 
 ## Full analysis
 
-*Use one or several suitable statistical/machine learning methods to analyze your data and to produce meaningful figures, tables, etc. This might again be code that is best placed in one or several separate R scripts that need to be well documented. You want the code to produce figures and data ready for display as tables, and save those. Then you load them here.*
+Since I found there were interactions between physical activity-drinking water and age-gender, then I chose BMI as outcome and fitted the data with linear regression model.
+I asked chatGPT for help to write code and used the code to find the best combination of all the predictors included in the processed dataset.
+By comparing RMSE values of each combination, all predictors were selected.
+After that, I calculated RMSE of the null model (8.04) and it was a little bit higher than all predictor model (6.53).
+
+![](images/Observed-Predicted1 .png){width="385"}
+
+According to the suggestions I received from module 11's discussion, I also included 2 interactions as predictors and used linear model to fit data again, it was under my expectation that it lowered the RMSE (6.39), but didn't make much difference in fact.
+
+![](images/Observed-Predicted2 .png){width="385"}
+
+Then I used cross validation to check if the all predictors model overfits the data and the average RMSE I got was 6.32, which was not so different from data splitting.
+
+And I also tried to fit LASSO model with all predictors inspired by the reply in discord, but I couldn't interpret the result well because it selected specific categories rather than the whole variables as the predictors as the best combination, which I couldn't figure out the meaning of that.
+So I only considered the linear regression result.
+
+Because I had a question for whether using BMI as an outcome is preferable than obesity level, I used discriminant analysis model to fit the data with obesity level as outcome inspired by module 12 discussion since there were 7 categories in total under obesity level.
+I got the accuracy for all predictors without interactions was 0.45, and 0.48 with interactions.
+The average accuracy of cross validation result was 0.48, almost as same as the result with interactions included.
 
 {{< pagebreak >}}
 
@@ -157,28 +184,29 @@ In the last model I select all the variables that I think may have effect on BMI
 
 ## Summary and Interpretation
 
-*Summarize what you did, what you found and what it means.*
+I chose a dataset that summarize an investigation result done in South American countries about individual physical behaviors and the classification of obesity level based on the information of height and weight obtained from the investigation.
+I had some questions to explore and did data analysis on this dataset.
+
+I found simple linear model fitting can answer my questions, which are that alcohol consumption is correlated to obesity, as well as there was interactions between physical activity frequency and drinking water.
+Besides, I found there was nearly no correlation between transportation choice and physical activity, which could answer another question I had.
+
+For machine learning model fitting, I found the best predictors for BMI index based on the value of some performance metrics after trying both linear regression and classification model.
+It is hard to compare the metrics between two models, but I tend to choose linear regression model and BMI as outcome since RMSE at value 6 means relatively low and the model fits well for me compared to accuracy at 0.48 means the model can predict 48% of the test data correctly.
+And the result of cross validation shows a a sign of not overfitting.
+
+So I think I would choose linear regression as the better prediction model and all variables
 
 ## Strengths and Limitations
 
-*Discuss what you perceive as strengths and limitations of your analysis.*
+I think my analysis has include two different types of model according to the type of outcome, which can provide more information and the result can be shown in different aspects.
+
+But there is still a concern that whether my model is overfitting not not since the RMSE I have got is much lower than exercise 8 which is several hundreds even if I have applied cross validation.
+But I still cannot find a good way to figure it out based on my knowledge so far.
 
 ## Conclusions
 
-**Haven't updated yet but will do it later!!!**
-
-*What are the main take-home messages?*
-
-*Include citations in your Rmd file using bibtex, the list of references will automatically be placed at the end*
-
-This paper [@leek2015] discusses types of analyses.
-
-These papers [@mckay2020; @mckay2020a] are good examples of papers published using a fully reproducible setup similar to the one shown in this template.
-
-Note that this cited reference will show up at the end of the document, the reference formatting is determined by the CSL file specified in the YAML header.
-Many more style files for almost any journal [are available](https://www.zotero.org/styles).
-You also specify the location of your bibtex reference file in the YAML.
-You can call your reference file anything you like, I just used the generic word `references.bib` but giving it a more descriptive name is probably better.
+The take-home message for this project is that obesity is correlated to individual physical behaviors.
+Based on the result of data analysis, age, gender, family history, drinking water, physical activity, and commute transportation are all predictors for obesity level which is represented by BMI index.
 
 {{< pagebreak >}}
 
