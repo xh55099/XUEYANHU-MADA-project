@@ -1,18 +1,19 @@
 ---
-title: "Supplement to Example Manuscript Template for a Data Analysis Project"
+title: "Supplement to Explore the factors that may be associated with obesity"
 
 subtitle: ""
-author: Andreas Handel
+author: Xueyan Hu
 date: "`r Sys.Date()`"
 format:
   pdf:
+    documentclass: scrartcl
+    papersize: letter
     toc: false
     number-sections: true
     highlight-style: github
-bibliography: ../../assets/dataanalysis_template_references.bib
-csl: ../../assets/vancouver.csl
+    bibliography: ../products/manuscript/dataanalysis-references.bib
+csl: ../products/manuscript/apa.csl
 ---
-
 
 ```{r, echo=FALSE, message=FALSE}
 # load a few R packages
@@ -20,82 +21,177 @@ library(here)
 library(knitr)
 ```
 
-
-
-
 This shows some materials that could go into a supplementary file. Often you want/need references here too. You can use the same reference bib file for this and the main text (as done here) or have separate bib files.
 
 For illustrative purposes, I'm doing the supplement as pdf. For this to work, you need a (La)TeX system installed. It's easy. Just follow [these steps](https://quarto.org/docs/output-formats/pdf-basics.html).
 
-Of course you would choose the format based on needs.
-
-I'm also using a different style for the references here. (vancouver vs apa in the main manuscript). Usually one would have the formatting of the references the same in those two documents, but I want to illustrate how easy it is to switch reference formatting styles, you just need to get the right CSL file and specify it in the YAML header. We could also have a seperate reference bibtext (`.bib`) file, but here we are using the same.
 
 # Overview
 
-A quick overview of what readers can find in the supplement.
-
+All of the raw data file in csv, processed data in RDS file, descriptive analysis, exploratory analysis,and full data analysis codes and products are included in this project folder.
 
 # Code and file information
 
-Explain here what each code/file is and does, and in which order (if any) users need to run thing to reproduce everything.
-Essentially, give a full set of instructions to re-generate everything.
+-   assets: storing reference pdf files and citation style files
 
+-   data:
+
+    -   raw-data: codebook created by me and original data file downloaded from website
+
+    -   processed-data: cleaned data saved in RDS file
+
+-   products: manuscript in qmd file and its render output with same name in doc file
+
+-   R: including all codes needed
+
+    -   analysis-code: including codes for simple exploratory analysis and machine learning models fitting both in qmd file and R script file
+
+    -   eda-code: including codes for simple exploratory analysis and machine learning models fitting both in qmd file and R script file
+
+    -   processing-code: including codes for data cleaning process both in qmd and R script file
+
+-   renv: storage for all of the packages used in this project in R
+
+-   results:
+
+    -   figures: all of the plots in png file created and saved from eda-code and analysis-code
+
+    -   tables: summary tables created and saved from eda-code and 2 linear model tables from analysis-code
 
 {{< pagebreak >}}
-
 
 # Additional Method Details
 
-Often, the main manuscript only allows for an overview description of the methods. Use the supplement to describe all your methods, models and approaches in a lot of detail. Reference specific parts of your code as needed.
+I used linear regression model, LASSO model, random forest model for continuous variable BMI as the outcome; and I used discriminant analysis model and multinominal logistic regression for categorical variables obesity level as the outcome.
 
 {{< pagebreak >}}
-
 
 # Additional results
 
-Show additional results here. Those can be some useful exploratory/descriptive figures or tables, or results from additional analyses that didn't make it into the main text.
-
-
-## Example additional result
-
-
-@tbl-resulttable1 shows an additional table summarizing a model fit.
+@tbl-summarytable1 shows a summary of the dataset according to each variable.
 
 ```{r}
-#| label: tbl-resulttable1
-#| tbl-cap: "Another fit table."
+#| label: tbl-summarytable1
+#| tbl-cap: "a dataset summary"
 #| echo: FALSE
-resulttable1 = readRDS(here("results","resulttable1.rds"))
-knitr::kable(resulttable1)
+summarytable1 = readRDS(here("results","tables","summarytable1.rds"))
+knitr::kable(summarytable1)
 ```
 
-
-
-@fig-result2 shows a scatterplot figure produced by one of the R scripts.
-
+@tbl-summarytable2 shows a more detailed summary of the dataset using skim function.
 
 ```{r}
-#| label: fig-result2
-#| fig-cap: "Height and weight."
+#| label: tbl-summarytable2
+#| tbl-cap: "a detailed dataset summary"
 #| echo: FALSE
-knitr::include_graphics(here("results","height_weight.png"))
+summarytable2 = readRDS(here("results","tables","summarytable2.rds"))
+knitr::kable(summarytable2)
 ```
 
+@tbl-lm1table shows linear model fitting result using Water + FAF + Water \* FAF as predictors and BMI as outcome.
+
+```{r}
+#| label: tbl-lm1table
+#| tbl-cap: "linear model fit 1"
+#| echo: FALSE
+lm1table = readRDS(here("results","tables","lm1table.rds"))
+# Extract coefficients from the summary object
+coefficients <- coef(lm1table)
+
+# Create a data frame from the coefficients
+lm1table_df <- data.frame(
+  Coefficients = rownames(coefficients),
+  Estimate = coefficients[, 1],
+  Std.Error = coefficients[, 2],
+  t.value = coefficients[, 3],
+  Pr..t.. = coefficients[, 4]
+)
+
+# Print the resulting data frame
+knitr::kable(lm1table_df)
+```
+
+@tbl-lm2table shows linear model fitting result using Alcohol as predictors and BMI as outcome.
+
+```{r}
+#| label: tbl-lm2table
+#| tbl-cap: "linear model fit 2"
+#| echo: FALSE
+lm2table = readRDS(here("results","tables","lm2table.rds"))
+# Extract coefficients from the summary object
+coefficients <- coef(lm2table)
+
+# Create a data frame from the coefficients
+lm2table_df <- data.frame(
+  Coefficients = rownames(coefficients),
+  Estimate = coefficients[, 1],
+  Std.Error = coefficients[, 2],
+  t.value = coefficients[, 3],
+  Pr..t.. = coefficients[, 4]
+)
+
+# Print the resulting data frame
+knitr::kable(lm2table_df)
+```
+
+@tbl-lm3table shows linear model fitting result using Gender + Age + History + Water + Alcohol + FAF + MTRANS as predictors and BMI as outcome.
+
+```{r}
+#| label: tbl-lm3table
+#| tbl-cap: "linear model fit 3"
+#| echo: FALSE
+lm3table = readRDS(here("results","tables","lm3table.rds"))
+# Extract coefficients from the summary object
+coefficients <- coef(lm3table)
+
+# Create a data frame from the coefficients
+lm3table_df <- data.frame(
+  Coefficients = rownames(coefficients),
+  Estimate = coefficients[, 1],
+  Std.Error = coefficients[, 2],
+  t.value = coefficients[, 3],
+  Pr..t.. = coefficients[, 4]
+)
+
+# Print the resulting data frame
+knitr::kable(lm3table_df)
+```
+
+@tbl-lm4table shows linear model fitting result using Gender \* Age as predictors and BMI as outcome.
+
+```{r}
+#| label: tbl-lm4table
+#| tbl-cap: "linear model fit 4"
+#| echo: FALSE
+lm4table = readRDS(here("results","tables","lm4table.rds"))
+# Extract coefficients from the summary object
+coefficients <- coef(lm4table)
+
+# Create a data frame from the coefficients
+lm4table_df <- data.frame(
+  Coefficients = rownames(coefficients),
+  Estimate = coefficients[, 1],
+  Std.Error = coefficients[, 2],
+  t.value = coefficients[, 3],
+  Pr..t.. = coefficients[, 4]
+)
+
+# Print the resulting data frame
+knitr::kable(lm4table_df)
+```
 
 {{< pagebreak >}}
-
 
 # Discussion
 
-Any additional discussion regarding the supplementary material/findings.
+For reproducing this project, raw-data folder will be downloaded and stored in a new folder called data and then included in a larger folder with all the codes together. Processing-code qmd file under R folder will be opened and run so the raw data will go through data cleaning process and the cleaned data file will be saved in a folder called process-data under the data folder. Then eda qmd file can be opened and run using processed data file and the outputs will be saved in a newly created fold called results. Results should include tables and figures two subfolders.
 
-These papers [@mckay2020; @mckay2020a] are good examples of papers published using a fully reproducible setup similar to the one shown in this template. 
+Then, exploratory-analysis qmd file under R folder will be involved for the whole data analysis and result will be seen directly in the file.
+
+After all of the qmd files under R folder are run out, the final manuscript will be generated. There are reference related files under assets folders so it will be made sure download and then manuscript qmd file under products fold will be find and run with a doc file saved beside the qmd file.
+
+Supplementary material file is under supplement subfolder and a pdf file will be created and saved after running this qmd file.
 
 {{< pagebreak >}}
 
-
 # References
-
-
-

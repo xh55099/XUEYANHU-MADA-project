@@ -23,9 +23,9 @@ library(knitr)
 
 # Summary/Abstract
 
-Obesity is a chronic complex disease which may increase the risk of severe health issues and even cancers.
-And the condition of obesity in real life could be related to physical behaviors.
-The project is exploring the potential factors that might be related to obesity level using machine learning models.
+Obesity is a chronic complex disease which may increase the risk of severe health issues including diabetes, cardiovascular disease and even cancers.
+And the condition of obesity in real life could be connected to individual physical behaviors, such as physical activity frequency, alcohol consumption, age, gender and inherit.
+The project is to explore the potential factors that might be related to obesity level using machine learning models to a dataset collected from an investigation done in South American countries including Colombia, Peru and Mexico.
 The data analysis result has shown that age, gender, family history, drinking water, physical activity, and commute transportation are all predictors for obesity level, which is represented by individual BMI.
 As for the outcome, when linear model is fit to data which has BMI as continuous variable, the performance is better than using obesity level as categorical variable.
 
@@ -36,25 +36,44 @@ As for the outcome, when linear model is fit to data which has BMI as continuous
 ## General Background Information
 
 [Obesity](https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight)![]() is a chronic complex disease defined by excessive fat deposits that can impair health.
-Obesity can lead to increased risk of type 2 diabetes and heart disease, it can affect bone health and reproduction, it increases the risk of certain cancers.
+Overweight and obesity are predominately a result of a sustained positive energy balance, stemming from a combination of excess dietary energy intake (mainly due to poor eating habits) and reduced energy expenditure (due to lack of physical activity and prolonged sedentary activities).
+It is a significant risk factor for and contributor to increased morbidity and mortality, mainly by its increasing risk of type 2 diabetes and heart disease, as well as certain types of cancer and chronic diseases, including osteoarthritis, liver and kidney disease, sleep apnea, and depression [@pi-sunyer2009].
+Also it does affct bone health and reproduction.
 
-In the recent decades, obesity has become a more and more common and severe problem across the world.
-
+In the recent decades, obesity has become a more and more common and severe problem across the world with worldwide obesity rates tripling since 1975, thus reaching pandemic proportions [@nu15132896].
 Worldwide adult obesity has more than doubled since 1990, and adolescent obesity has quadrupled.
 In 2022, 1 in 8 people in the world were living with obesity.
+In the US.
+the situation seems similar with the worldwide trend.
+In 2022, 22 states had at least 35% of adults with obesity, up from 19 states in 2021.
+Ten years ago, CDC said, no state had an adult obesity prevalence at or above 35%.
 
-There is no doubt that obesity is a multifactorial disease due to obesogenic environments, psycho-social factors and genetic variants in most cases, but personal behavior could also has correlation with the result of overweight and obesity.
+Obesity level is basically defined by Body Mass Index ([BMI](https://www.cdc.gov/obesity/basics/adult-defining.html)).
+BMI is a person’s weight in kilograms divided by the square of height in meters.
+A high BMI can indicate high body fatness.
+BMI less than 18.5 is defined as underweight; BMI range between 18.5-24.9 falls within the healthy weight range.
+If BMI is from 25 to 29.9, then the person is regarded as overweight.
+And when someone's BMI is higher than 30, he/she is at the obesity range.
+
+There is no doubt that obesity is a multifarious disease due to cryogenics environments, psycho-social factors and genetic variants in most cases, but many factors can contribute to excess weight gain including eating patterns, physical activity levels, and sleep routines.
+Social determinants of health, genetics, and taking certain medications also play a role.
 
 There is a lot of discussion on the Internet and social media about fitness and weight loss, and people assume that physical activity can lose weight as a fact.
-Also KOLs ususally encourage people to drink more water for higher metabolic levels.
+Also KOLs usually encourage people to drink more water for higher metabolic levels.
 But I have not seen a clear data to prove it.
 At the same time, the effect of physical activity to lose weight is also different from person to person.
 
-In addition, according to what I learned from nutrition course, alcohol consumption may be related to weight gain because [alcohol metabolism](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6527027/) and carbohydrate metabolism both go through the same pathway/cycle in the middle and late stages.
+In addition, according to what I learned from nutrition course, alcohol consumption may be related to weight gain because alcohol metabolism and carbohydrate metabolism both go through the same pathway/cycle in the middle and late stages [@cederbaum2012].
+Ethanol is converted into acetaldehyde by the action of ethanol dehydrogenase, and the acetic acid produced by acetaldehyde dehydrogenase eventually enters the tricarboxylic acid cycle to produce energy, which is consistent with process of the consumption of carbohydrates for energy.
+If someone is lacking of oxidative enzymes, ethanol is nonoxidatively metabolized by two pathways.
+A reaction catalyzed by the enzyme fatty acid ethyl ester (FAEE) synthase leads to the formation of molecules known as FAEEs.
+A reaction with the enzyme phospholipase D (PLD) results in the formation of a phospholipid known as phosphatidyl ethanol [@zakhari2006].
+No matter how calalystic reactions work, finally alcohol will be converted to the reagents for tricarboxylic acid cycle and then energy is released.
 
 ## Description of data and data source
 
 The data is obtained from a website [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/544/estimation+of+obesity+levels+based+on+eating+habits+and+physical+condition) which have collected the survey results of individuals from the countries of Mexico, Peru and Colombia on their eating habits and physical condition, as well as their estimation of obesity levels.
+The original dataset contains 17 variables and 2111 observations, labeled with the class variable Obesity Level which has 7 categories.
 
 ## Questions/Hypotheses to be addressed
 
@@ -69,15 +88,14 @@ Data cleaning including generating necessary variable, renaming categories and v
 
 First to take a deeper look of the data, I would like to do some descriptive analysis including bar chart, boxplot, scatterplot etc. to indicate the distribution of the data.
 
-Then simple linear fit will be applied to explore the relationship between variables and outcomes (both categorical and numeric).
-
-Prediction will be made.
+Then simple linear fit will be applied to explore the relationship between variables and outcomes (both categorical and numeric), and proper predictors will be pick out from the variables.
+And then machine learning models will be chosen and fitted to the dataset wieh each performance metrics will be determined and compared for reporting the "best" model among the choices based on reality.
 
 ## Schematic of workflow
 
 ## Data acquisition
 
-The dataset presents the results of a survey on the topic of obesity including personal physical conditions and answers to behavioral questions.
+The dataset presents the results of a survey on the topic of obesity including eating habits and personal physical conditions and answers to behavioral questions.
 
 ## Data import and cleaning
 
@@ -95,7 +113,7 @@ Male is replaced by 1 and female by 2 under Gender variable for more convenient 
 Bar chart, box plot will show the distribution of obesity level by different variables, as well as the population features of the people under investigation.
 All figures will be saved in 'figure' subfolder under 'result' folder and shown in the manuscript.
 
-By fitting the data with simple linear model, the result will show whether each independent variable has main effect to the dependent variable through the P value.
+By fitting the data with simple linear model, the result will show whether each independent variable has main effect to the dependent variable and the possible interactions between variables will also be detected.
 And the summary table is stored in 'table' subfolder under 'result' folder.
 
 {{< pagebreak >}}
@@ -104,38 +122,57 @@ And the summary table is stored in 'table' subfolder under 'result' folder.
 
 ## Exploratory/Descriptive analysis
 
-Bar chart shows that the genders of the cohort under investigation are balanced.
+Bar chart shows that the ratio of male and female populaiton is quite close to 1:1, which means genders of the cohort under investigation are balanced.
 
 Figure 1.
 Gender distribution.
 
 ![](images/gender-distribution.png)
 
-It can be seen that almost two thirds of the people are identified with over weight.
+The age distribution figure shows that people aged 20 to 30 account for the largest proportion of the total population which is nearly two thirds of the total population.
+Then the second highest ranking is 30-40, occupying about a quarter of the total population.
 
 Figure 2.
 Age distribution
 
-![](images/age-distribution.png)
+![](images/age-distribution-02.png)
+
+It can be seen that almost three fourths of the people are identified with over weight.
+The highest population fall into over weight level 1, while the under weight level has the lowest population.
 
 Figure 3.
 Obesity level distribution.
 
 ![](images/obesity-distribution.png)
 
+The gender ratio is close to 1:1 but its distribution under each obesity level is different.
 There is no obvious pattern of obesity levels by gender.
+The ratios of male and female in other obesity levels are close to 1:1 except for overweight level 2 that women occupy almost all of the population and Obese level 1, most of people under which are male.
+In addition, around two thirds of underweight people are men.
 
 Figure 4.
 Gender distribution in each obesity levels.
 
 ![](images/obesity%20level%20by%20gender.png)
 
-It is apparent that people with family obesity history may tend to be over weight according to figure 4 below.
+Since people aged between 21 and 30 occupy the largest part of the total population, I could expect that in each level, most of people would fall in the age group of 21-30.
+And it can be seen from this bar chart.
+Moreover, more than half of underweight people are from the age group 0-20, it might reflect the problem that health condition and nutrition intake should be regarded seriously by the countries that attend the survey.
 
 Figure 5.
 Age distribution in each obesity levels.
 
 ![](images/obesity%20level%20by%20age.png)
+
+It is apparent that people with family obesity history may tend to be overweight according to figure 6 below.
+The median BMI is much higher for people who have family obesity history than the people who don't.
+And the data density of no family history group is aggregated at the level under 30.
+There is an article talking about family obesity history and its impact on children in the family.
+The article finds childhood obesity is positively correlated to the obesity status of their parents [@nu15132896].
+When both parents were obese, approximately half of the children in Europe were overweight.
+This highlights the presence of an "obesogenic environment" typically fostered by obese parents, impacting not only themselves but also their children.
+This environment often involves reduced physical activity, increased sedentary behavior such as screen time, and higher intake of calorie-dense foods, contributing to weight gain across the family.
+Therefore, family history is not only a genetic effect, lifestyle, environment also plays an important role for offspring obesity.
 
 Figure 6.
 Violin plot of BMI by family obesity history.
@@ -153,30 +190,74 @@ Then, I would like to fit linear model for BMI by both water consumption and phy
 And the result indicates that there is a connection effect between them two, which means that both of them contribution to obesity control.
 
 Also, I use single indicator, alcohol consumption and BMI as an outcome to fit linear model.
+It shows that if an individual consumes alcohol sometimes than never, his BMI increase 3.98.
+But the correlations are all negative for level 3 and 4, which means consuming more alcohol may decrease BMI.
+
+Because I still wonder if obesity could be related to gender or age.
+So I fit simple linear model to the dataset using gender and age as independent variable.
+The result indicates the interactions between them.
+It is a factor out of my expectation.
+And I decide to include this interaction for next machine learning models.
 
 In the last model I select all the variables that I think may have effect on BMI as predictors and BMI as outcome.
 
+Since I think it is quite obvious that family history is an important factor for obesity, and also I have mentioned some reasons how family obesity could influence the kids involved, I choose to skip it for this basic exploratory analysis here.
+But I will include it in the following part.
+
 ## Full analysis
 
-Since I found there were interactions between physical activity-drinking water and age-gender, then I chose BMI as outcome and fitted the data with linear regression model.
-I asked chatGPT for help to write code and used the code to find the best combination of all the predictors included in the processed dataset.
-By comparing RMSE values of each combination, all predictors were selected.
-After that, I calculated RMSE of the null model (8.04) and it was a little bit higher than all predictor model (6.53).
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Model                             | Predictor                                 | Metric Value  | Metric Value on testing data |
++===================================+===========================================+===============+==============================+
+| Linear null                       | \-                                        | RMSE=8.00     | RMSE=8.04                    |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Linear regression 1               | Age, History, Alcohol, MTRANS             | RMSE=0.62     | RMSE=6.61                    |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Linear regression 2               | All                                       | RMSE=6.30     | RMSE=3.99                    |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Linear regression 2 + LASSO model | All                                       | RMSE=7.38     | RMSE=7.38                    |
+|                                   |                                           |               |                              |
+|                                   |                                           | l=0.0011      |                              |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Random forest                     | Gender, Age, History, Water, Alcohol, FAF | RMSE=3.22     | RMSE=3.97                    |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Logistic null                     | \-                                        | Accuracy=0.17 | Accuracy=0.15                |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Discriminant analysis             | All                                       | Accuracy=0.50 | Accuracy=0.48                |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Multinominal logistic regression  | All                                       | Accuracy=0.58 | Accuracy=0.52                |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
 
-![](images/Observed-Predicted1 .png){width="385"}
+The above table has listed all of the the models I have chosen to fit the data together with the null models.
 
-According to the suggestions I received from module 11's discussion, I also included 2 interactions as predictors and used linear model to fit data again, it was under my expectation that it lowered the RMSE (6.39), but didn't make much difference in fact.
+When I use BMI as a continuous outcome, linear regression models can be applied to the data.
+Compared to the linear null model, I think all of the ML models perform better according to RMSE value.
+Since I think it is reasonable that physical activity is a potential factor that may influence the obesity level, although linear model with all variables and interactions has higher RMSE, I think regression model 2 that picks all of the predictors is better.
+Then since random forest model selects all predictors and RMSE value is relatively lower among all the linear models, RF model is the choice for linear model.
 
-![](images/Observed-Predicted2 .png){width="385"}
+The figure below shows the prediction condition using random forest model together with the null model on testing data.
+Both sides of the 45 degree line have outliners and the scatters are not clustered close enough to this line which indicates the prediction is not really well.
 
-Then I used cross validation to check if the all predictors model overfits the data and the average RMSE I got was 6.32, which was not so different from data splitting.
+![](images/Observed-Predicted .png){width="2100"}
 
-And I also tried to fit LASSO model with all predictors inspired by the reply in discord, but I couldn't interpret the result well because it selected specific categories rather than the whole variables as the predictors as the best combination, which I couldn't figure out the meaning of that.
-So I only considered the linear regression result.
+As for obesity level as a categorical outcome, logistic models are fit to the data.
+And I use accuracy as the performance metric for this evaluation.
+First, both the models I use have better performance than null model.
+And according to the accuracy, multinominal logistic regression performs better.
 
-Because I had a question for whether using BMI as an outcome is preferable than obesity level, I used discriminant analysis model to fit the data with obesity level as outcome inspired by module 12 discussion since there were 7 categories in total under obesity level.
-I got the accuracy for all predictors without interactions was 0.45, and 0.48 with interactions.
-The average accuracy of cross validation result was 0.48, almost as same as the result with interactions included.
+Because I have chosen random forest model between linear regression models and multinominal logistic regression between logistic models, I use test data to assess the quality of these two models separately.
+And the new RMSE on test data for random forest model is 3.97, and it is 3.22 when the model is trained and cross validation is applied.
+And the new Accuracy is 0.52 when it is used on test data, also lower than 0.58 when the model is trained.
+The metric value difference is a sign that both of the models are overfitting.
+
+So I try to use test data to assess all of the models in the table above and collect new metric values.
+For linear regression 1, the RMSE on testing data is 6.61, which is much higher than that on training data.
+So this model is not doing prediction well.
+The new RMSE for linear regression 2 is 3.99 lower than 6.30 on training data, which is a sign of good prediction.
+Besides, LASSO model has the same RMSE on both training data and testing data which is 7.38.
+It is also a reasonable result for good prediction.
+Both logistic models have lower accuracy than on test data than training data.
+Based on all the result of the machine learning I have used on dataset, I think linear regression model with LASSO regularization is a good choice among them.
 
 {{< pagebreak >}}
 
@@ -187,21 +268,27 @@ The average accuracy of cross validation result was 0.48, almost as same as the 
 I chose a dataset that summarize an investigation result done in South American countries about individual physical behaviors and the classification of obesity level based on the information of height and weight obtained from the investigation.
 I had some questions to explore and did data analysis on this dataset.
 
-I found simple linear model fitting can answer my questions, which are that alcohol consumption is correlated to obesity, as well as there was interactions between physical activity frequency and drinking water.
-Besides, I found there was nearly no correlation between transportation choice and physical activity, which could answer another question I had.
+I found simple linear model fitting can answer my questions, which were that alcohol consumption was correlated to obesity, as well as there were interactions between physical activity frequency and water drinking amount.
+In addition, I found there was nearly no correlation between transportation choice and physical activity, which could answer another question I had.
+At the same time, outside the scope of the problem, I also discovered the interaction between gender and age in this process.
 
-For machine learning model fitting, I found the best predictors for BMI index based on the value of some performance metrics after trying both linear regression and classification model.
-It is hard to compare the metrics between two models, but I tend to choose linear regression model and BMI as outcome since RMSE at value 6 means relatively low and the model fits well for me compared to accuracy at 0.48 means the model can predict 48% of the test data correctly.
-And the result of cross validation shows a a sign of not overfitting.
-
-So I think I would choose linear regression as the better prediction model and all variables
+For machine learning model fitting, I found the best predictors for BMI index based on the value of some performance metrics after trying both linear regression and classification model, which were gender, age, family history, water drinking amount, frequency of physical activity, alcohol consumption frequency and commute transporation.
+Although the machine learning models that I used for fitting the dataset are different types and their metrics and not be compared directly, the assessment of model quality using testing data could give a clue for the model selection.
+Considering all the results of performance metrics, I finally chose liner regression model with LASSO regularization with all predictors plus BMI as the outcome.
+The reason was that RMSE calculated of predicted MBI values on testing data split from cleaned dataset was as same as the result when it was trained.
+Also, regularization was applied by LASSO model to reduce overfitting at the same time.
 
 ## Strengths and Limitations
 
-I think my analysis has include two different types of model according to the type of outcome, which can provide more information and the result can be shown in different aspects.
+I think my analysis has include two different types of model according to the type of outcome and each type include 2 models, which can provide more information and the result can be shown in different aspects as well as more choices were provided.
+Also, interactions between predictors were found and included in the model fitting process.
+Both predictors with and without interactions were all fit and compared with each other.
+And LASSO model was used for decreasing overfitting.
 
-But there is still a concern that whether my model is overfitting not not since the RMSE I have got is much lower than exercise 8 which is several hundreds even if I have applied cross validation.
-But I still cannot find a good way to figure it out based on my knowledge so far.
+I did tried to do tuning for random forest model but I failed for running it successfully, so this could be a limitation that I have.
+And maybe there could be more metrics that I can also calculate but I only chose 1 for each model.
+Furthermore, chatGPT told me that even if testing result has a sign for well predicting, there still could be other factors for further assessment such as F1-score and so on.
+But base on my understanding, I don't know what other methods I could choose from so I just stopped here.
 
 ## Conclusions
 

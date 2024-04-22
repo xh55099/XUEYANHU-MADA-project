@@ -5,23 +5,19 @@ date: "03/22/2024"
 output: html_document
 ---
 
-  
-  
 This Quarto file loads the cleaned data and does some exploring.
 
-I'm only showing it the way where the code is included in the file. 
-As described in the `processing_code` materials, I currently prefer the approach of having R code in a separate file and pulling it in.
+I'm only showing it the way where the code is included in the file. As described in the `processing_code` materials, I currently prefer the approach of having R code in a separate file and pulling it in.
 
 But I already had this written and haven't yet re-done it that way. Feel free to redo and send a pull request on GitHub :)
 
-Again, it is largely a matter of preference and what makes the most sense to decide if one wants to have code inside Quarto files, or as separate R files.
-And sometimes, an R script with enough comments is good enough and one doesn't need a Quarto file.
+Again, it is largely a matter of preference and what makes the most sense to decide if one wants to have code inside Quarto files, or as separate R files. And sometimes, an R script with enough comments is good enough and one doesn't need a Quarto file.
 
 Also note that while here I split cleaning and exploring, this is iterative. You saw that as part of the processing, we already had to explore the data somewhat to understand how to clean it. In general, as you explore, you'll find things that need cleaning. As you clean, you can explore more. Therefore, at times it might make more sense to combine the cleaning and exploring code parts into a single R or Quarto file. Or split things in any other logical way.
 
 As part of the exploratory analysis, you should produce plots or tables or other summary quantities for the most interesting/important quantities in your data. Depending on the total number of variables in your dataset, explore all or some of the others. Figures produced here might be histograms or density plots, correlation plots, etc. Tables might summarize your data.
 
-Start by exploring one variable at a time. Then continue by creating plots or tables of the outcome(s) of interest and the predictor/exposure/input variables you are most interested in. If your dataset is small, you can do that for all variables. 
+Start by exploring one variable at a time. Then continue by creating plots or tables of the outcome(s) of interest and the predictor/exposure/input variables you are most interested in. If your dataset is small, you can do that for all variables.
 
 Plots produced here can be scatterplots, boxplots, violinplots, etc. Tables can be simple 2x2 tables or larger ones.
 
@@ -35,8 +31,16 @@ library(skimr)
 library(ggplot2)
 library(tidymodels)
 library(discrim)
+library(randomForest)
+library(caret)
+library(lattice)
+library(tidymodels)
+library(ranger)
+library(parsnip)
+library(glmnet)
+library(MASS)
+library(nnet)
 ```
-
 
 Load the data.
 
@@ -47,12 +51,9 @@ data_location <- here::here("data","processed-data","processeddata.rds")
 mydata <- readRDS(data_location)
 ```
 
-
-
 # fit simple linear model
 
-First, I am curious that if physical activity could be correlated to the choice of transportation since I have heard a theory that if someone take much effort on commute transportation, they tend to spend less time on exercise.
-First I want to use number to represent the type of transportation. Walking requires most energy consumption, then it goes with public transportation and automobile is the least.
+First, I am curious that if physical activity could be correlated to the choice of transportation since I have heard a theory that if someone take much effort on commute transportation, they tend to spend less time on exercise. First I want to use number to represent the type of transportation. Walking requires most energy consumption, then it goes with public transportation and automobile is the least.
 
 ```{r}
 # Define a function to map transportation modes to numeric values
@@ -79,8 +80,8 @@ correlation <- cor(mydata$FAF, mydata$MTRANSn)
 # Print correlation coefficient
 print(correlation)
 ```
-Since the correlation coefficient is close to zero, there is almost no linear association between them. So this result doesn't really support the theory that I have heard from social media.
 
+Since the correlation coefficient is close to zero, there is almost no linear association between them. So this result doesn't really support the theory that I have heard from social media.
 
 Then, I would like to see how drinking water plus physical activity affect obesity.
 
@@ -88,7 +89,6 @@ Then, I would like to see how drinking water plus physical activity affect obesi
 # linear model of BMI by water and FAF
 lm1 <- lm(BMI ~ Water + FAF + Water * FAF, data = mydata)
 lm1_result <- summary(lm1)
-lm1_result
 
 # save the result
 lm_file = here("results", "tables", "lm1table.rds")
@@ -106,6 +106,7 @@ lm2_result <- summary(lm2)
 lm_file = here("results", "tables", "lm2table.rds")
 saveRDS(lm2_result, file = lm_file)
 ```
+
 I think it makes a little bit sense to me that there is a connection effect of water and physical activity on BMI, which might be supportive for what we learn that drinking more water and doing more exercise will lower the risk of obesity.
 
 I haven't include gender or age for model fitting, I will try to combine them in one model here.
@@ -113,49 +114,41 @@ I haven't include gender or age for model fitting, I will try to combine them in
 ```{r}
 lm4 <- lm(BMI ~ Gender * Age, data = mydata)
 lm4_result <- summary(lm4)
-lm4_result
 
 # save the result
-lm_file = here("results", "tables", "lm3table.rds")
-saveRDS(lm3_result, file = lm_file)
+lm_file = here("results", "tables", "lm4table.rds")
+saveRDS(lm4_result, file = lm_file)
 ```
 
 This linear model proves gender and age can also be predictors for BMI and there is interaction between them. So I will include them in the all predictor model.
-
 
 Last, I will try to use all predictors that I believe may affect BMI to fit a model.
 
 ```{r}
 lm3 <- lm(BMI ~ Gender + Age + History + Water + Alcohol + FAF + MTRANS, data = mydata)
 lm3_result <- summary(lm3)
-lm3_result
 
 # save the result
 lm_file = here("results", "tables", "lm3table.rds")
 saveRDS(lm3_result, file = lm_file)
 ```
 
-Choose predictors only important for the model fitting. Thanks to my classmates' replies, I received some useful suggestion for choosing predictors, which are chi-square, LASSO and lowest RMSE. 
-According to my searching result online, chi-square is good for categorical variable as outcome, and LASSO might shrink the coefficients too much. So I will go with the lowest RMSE in the following and see what will happen next.
+Choose predictors only important for the model fitting. Thanks to my classmates' replies, I received some useful suggestion for choosing predictors, which are chi-square, LASSO and lowest RMSE. According to my searching result online, chi-square is good for categorical variable as outcome, and LASSO might shrink the coefficients too much. So I will go with the lowest RMSE in the following and see what will happen next.
 
 ```{r}
-# Load necessary packages
-library(caret)
-
 # Split data into training and testing sets
 set.seed(123)  # Set seed for reproducibility
 trainIndex <- createDataPartition(mydata$BMI, p = 0.8, list = FALSE)
 trainData <- mydata[trainIndex, ]
 testData <- mydata[-trainIndex, ]
+# Create indices for 10-fold cross-validation
+cv_folds <- createFolds(trainData$BMI, k = 10)
+```
 
-# find important predictors without interactions
-
+```{r}
+# predictors excluding interactions first
 # Define predictors
 predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
-
-# Initialize variables to store results
-minRMSE1 <- Inf
-bestSubset1 <- NULL
 
 # Iterate through all possible combinations of predictors
 for (i in 1:length(predictors)) {
@@ -163,19 +156,35 @@ for (i in 1:length(predictors)) {
   for (j in 1:ncol(subsets1)) {
     predictors_subset1 <- subsets1[, j]
     
-    # Fit model using subset of predictors
-    formula_lm1 <- paste("BMI ~", paste(predictors_subset1, collapse = " + "))
-    model_lm1 <- lm(formula_lm1, data = trainData)
+    # Initialize variable to store RMSE for current combination of predictors
+    total_rmse_lm1 <- 0
     
-    # Make predictions on test set
-    predictions_lm1 <- predict(model_lm1, newdata = testData)
+    # Perform cross-validation
+    for (fold in 1:10) {
+      # Extract indices for training and validation data for current fold
+      train_indices <- unlist(cv_folds[-fold])
+      validation_indices <- cv_folds[[fold]]
+      
+      # Fit model using subset of predictors
+      formula_lm1 <- paste("BMI ~", paste(predictors_subset1, collapse = " + "))
+      model_lm1 <- lm(formula_lm1, data = trainData[train_indices, ])
+      
+      # Make predictions on validation set
+      predictions_lm1 <- predict(model_lm1, newdata = trainData[validation_indices, ])
+      
+      # Calculate RMSE for current fold
+      fold_rmse_lm1 <- sqrt(mean((trainData$BMI[validation_indices] - predictions_lm1)^2))
+      
+      # Add RMSE for current fold to total RMSE
+      total_rmse_lm1 <- total_rmse_lm1 + fold_rmse_lm1
+    }
     
-    # Calculate RMSE
-    RMSE1 <- sqrt(mean((testData$BMI - predictions_lm1)^2))
+    # Calculate average RMSE across all folds
+    avg_rmse_lm1 <- total_rmse_lm1 / 10
     
-    # Update minRMSE and bestSubset if RMSE is lower
-    if (RMSE1 < minRMSE1) {
-      minRMSE1 <- RMSE1
+    # Update minRMSE and bestSubset if average RMSE is lower
+    if (avg_rmse_lm1 < minRMSE1) {
+      minRMSE1 <- avg_rmse_lm1
       bestSubset1 <- predictors_subset1
     }
   }
@@ -184,47 +193,41 @@ for (i in 1:length(predictors)) {
 # Print results
 print(paste("Best subset of predictors:", paste(bestSubset1, collapse = ", ")))
 print(paste("Lowest RMSE:", minRMSE1))
+```
 
-# calculate null model
+```{r}
+# calculate null model RMSE
+# Initialize variable to store total RMSE across all folds
+total_rmse_null <- 0
 
-# Compute the mean BMI from the training data
-mean_bmi_train <- mean(trainData$BMI)
+# Perform cross-validation
+for (fold in 1:10) {
+  # Extract indices for training and validation data for current fold
+  train_indices <- unlist(cv_folds[-fold])
+  validation_indices <- cv_folds[[fold]]
+  
+  # Compute the mean BMI from the training data
+  mean_bmi_train <- mean(trainData$BMI[train_indices])
+  
+  # Create a vector of predicted values equal to the mean BMI from training data
+  predicted_bmi_validation <- rep(mean_bmi_train, length(validation_indices))
+  
+  # Compute RMSE (Root Mean Squared Error) on validation data for current fold
+  rmse_null_validation <- sqrt(mean((trainData$BMI[validation_indices] - predicted_bmi_validation)^2))
+  
+  # Add RMSE for current fold to total RMSE
+  total_rmse_null <- total_rmse_null + rmse_null_validation
+}
 
-# Create a vector of predicted values equal to the mean BMI from training data
-predicted_bmi_test <- rep(mean_bmi_train, nrow(testData))
-
-# Compute RMSE (Root Mean Squared Error) on test data
-rmse_null_test <- sqrt(mean((testData$BMI - predicted_bmi_test)^2))
+# Calculate average RMSE across all folds
+avg_rmse_null <- total_rmse_null / 10
 
 # Print the results
-print(paste("Null Model RMSE on Test Data:", rmse_null_test))
-```
-```{r}
-# Create a data frame for plotting
-plot_data1 <- data.frame(Observed = testData$BMI, 
-                        Predicted_All = predictions_lm1,
-                        Predicted_Null = predicted_bmi_test)
-
-# Plot using ggplot
-p1 <- ggplot(plot_data1, aes(x = Observed, y = Predicted_All)) +
-  geom_point(color = "blue", size = 2, shape = 16) +
-  geom_point(aes(y = Predicted_Null), color = "green", size = 2, shape = 16) +
-  geom_abline(intercept = 0, slope = 1, color = "red") +
-  labs(x = "Observed BMI", y = "Predicted BMI", title = "Observed vs Predicted BMI") +
-  theme_minimal() +
-  theme(legend.position = "top") +
-  scale_shape_manual(values = c(16, 16)) +
-  scale_color_manual(values = c("blue", "green")) +
-  guides(color = guide_legend(title = "Model"))
-plot(p1)
-
-# save the plot
-figure_file = here("results","figures","Observed-Predicted1 .png")
-ggsave(filename = figure_file, plot=p1) 
+print(paste("Null Model RMSE using Cross-Validation:", avg_rmse_null))
 ```
 
-
 ```{r}
+# interactions included in predictors
 # Define predictors and response variable
 predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
 interaction_terms <- c("Gender_Age", "FAF_Water")  # Define interaction terms
@@ -250,267 +253,431 @@ for (i in 1:length(predictors_updated)) {
   for (j in 1:ncol(subsets2)) {
     predictors_subset2 <- subsets2[, j]
     
-    # Fit model using subset of predictors
-    formula_lm2 <- paste("BMI ~", paste(predictors_subset2, collapse = " + "))
-    model_lm2 <- lm(formula_lm2, data = trainData)
+    # Initialize variable to store RMSE for current combination of predictors
+    total_rmse_lm2 <- 0
     
-    # Make predictions on test set
-    predictions_lm2 <- predict(model_lm2, newdata = testData)
+    # Perform cross-validation
+    for (fold in 1:10) {
+      # Extract indices for training and validation data for current fold
+      train_indices <- unlist(cv_folds[-fold])
+      validation_indices <- cv_folds[[fold]]
+      
+      # Fit model using subset of predictors
+      formula_lm2 <- paste("BMI ~", paste(predictors_subset2, collapse = " + "))
+      model_lm2 <- lm(formula_lm2, data = trainData[train_indices, ])
+      
+      # Make predictions on validation set
+      predictions_lm2 <- predict(model_lm2, newdata = trainData[validation_indices, ])
+      
+      # Calculate RMSE for current fold
+      fold_rmse_lm2 <- sqrt(mean((trainData$BMI[validation_indices] - predictions_lm2)^2))
+      
+      # Add RMSE for current fold to total RMSE
+      total_rmse_lm2 <- total_rmse_lm2 + fold_rmse_lm2
+    }
     
-    # Calculate RMSE
-    RMSE2 <- sqrt(mean((testData$BMI - predictions_lm2)^2))
+    # Calculate average RMSE across all folds
+    avg_rmse_lm2 <- total_rmse_lm2 / 10
     
-    # Update minRMSE and bestSubset if RMSE is lower
-    if (RMSE2 < minRMSE2) {
-      minRMSE2 <- RMSE2
+    # Update minRMSE and bestSubset if average RMSE is lower
+    if (avg_rmse_lm2 < minRMSE2) {
+      minRMSE2 <- avg_rmse_lm2
       bestSubset2 <- predictors_subset2
     }
   }
 }
 
 # Print results
-print(paste("Best subset of predictors (including interactions):", paste(bestSubset2, collapse = ", ")))
-print(paste("Lowest RMSE (including interactions):", minRMSE2))
+print(paste("Best subset of predictors (including interactions) using cross-validation:", paste(bestSubset2, collapse = ", ")))
+print(paste("Lowest RMSE (including interactions) using cross-validation:", minRMSE2))
 ```
 
-```{r}
-# Create a data frame for plotting
-plot_data2 <- data.frame(Observed = testData$BMI, 
-                        Predicted_All = predictions_lm2,
-                        Predicted_Null = predicted_bmi_test)
+It shows different predictor combinations but the good thing is both of the linear models have lower RMSE than null model which indicates they perform better than null model. Then, I will try LASSO model.
 
-# Plot using ggplot
-p2 <- ggplot(plot_data2, aes(x = Observed, y = Predicted_All)) +
-  geom_point(color = "red", size = 2, shape = 16) +
-  geom_point(aes(y = Predicted_Null), color = "yellow", size = 2, shape = 16) +
-  geom_abline(intercept = 0, slope = 1, color = "black") +
-  labs(x = "Observed BMI", y = "Predicted BMI", title = "Observed vs Predicted BMI with interactions") +
-  theme_minimal() +
-  theme(legend.position = "top") +
-  scale_shape_manual(values = c(16, 16)) +
-  scale_color_manual(values = c("red", "yellow")) +
-  guides(color = guide_legend(title = "Model"))
-plot(p2)
-# save the plot
-figure_file = here("results","figures","Observed-Predicted2 .png")
-ggsave(filename = figure_file, plot=p2) 
+```{r}
+# Initialize variables to store results
+min_rmse_lasso <- Inf
+best_subset_lasso <- NULL
+
+# Perform LASSO regression with cross-validation
+lasso_model <- cv.glmnet(as.matrix(trainData[, predictors_updated]), trainData$BMI, alpha = 1, nfolds = 10)
+
+# Extract the optimal lambda value
+optimal_lambda <- lasso_model$lambda.min
+
+# Fit the LASSO model using the optimal lambda
+lasso_model_optimal <- glmnet(as.matrix(trainData[, predictors_updated]), trainData$BMI, alpha = 1, lambda = optimal_lambda)
+
+# Compute RMSE on test data using the optimal LASSO model
+predictions_lasso <- predict(lasso_model_optimal, newx = as.matrix(testData[, predictors_updated]))
+rmse_lasso <- sqrt(mean((testData$BMI - predictions_lasso)^2))
+
+# Extract coefficients of the LASSO model
+lasso_coefficients <- as.matrix(coef(lasso_model_optimal))
+
+# Print results
+cat("Optimal lambda:", optimal_lambda, "\n")
+cat("RMSE with LASSO:", rmse_lasso, "\n")
+
+# Print non-zero coefficients (selected predictors)
+selected_predictors <- rownames(lasso_coefficients)[lasso_coefficients != 0, drop = FALSE]
+print("Selected predictors by LASSO:")
+print(selected_predictors)
 ```
 
-It is under my expectation that all-predictor model with the 2 interactions has the lowest RMSE. So I also would like to try LASSO regression model here and see the result.
+After that, I will select another regression model to fit data, here I will use random forest model.
 
 ```{r}
-# Load necessary packages
-library(glmnet)
-library(caret)
+# Create formula with response and all predictors
+predictors_updated <- c(predictors, "Gender_Age", "FAF_Water")
+formula_rf <- as.formula(paste(response, "~", paste(predictors_updated, collapse = " + ")))
 
-# Set seed for reproducibility
-set.seed(123)
+# Initialize variables to store results
+best_rmse_rf <- Inf
+best_predictors_rf <- NULL
 
-# Define predictors and response variable
-predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
-response <- "BMI"
+# Forward selection with cross-validation
+for (fold in seq_along(cv_folds)) {
+  # Extract training and validation indices for current fold
+  train_indices <- unlist(cv_folds[-fold])
+  validation_indices <- cv_folds[[fold]]
+  
+  # Initialize variables to store results for current fold
+  best_rmse_fold <- Inf
+  best_predictors_fold <- NULL
+  
+  # Forward selection
+  for (i in seq_along(all_predictors)) {
+    predictors_subset_rf <- all_predictors[1:i]
+    formula_subset_rf <- as.formula(paste(response, "~", paste(predictors_subset_rf, collapse = " + ")))
+    
+    # Fit random forest model using the training data for the current fold
+    model_rf <- randomForest(formula = formula_subset_rf, data = mydata[train_indices, ])
+    
+    # Make predictions on the validation data for the current fold
+    predictions_rf <- predict(model_rf, newdata = mydata[validation_indices, ])
+    
+    # Calculate RMSE for the current fold
+    rmse_rf <- sqrt(mean((mydata$BMI[validation_indices] - predictions_rf)^2))
+    
+    # Check if current RMSE is better than the best RMSE so far for this fold
+    if (rmse_rf < best_rmse_fold) {
+      best_rmse_fold <- rmse_rf
+      best_predictors_fold <- predictors_subset_rf
+    }
+  }
+  
+  # Check if the best RMSE for this fold is better than the best RMSE so far
+  if (best_rmse_fold < best_rmse_rf) {
+    best_rmse_rf <- best_rmse_fold
+    best_predictors_rf <- best_predictors_fold
+  }
+}
 
-# Prepare data
-x <- model.matrix(as.formula(paste(response, "~", paste(predictors, collapse = "+"))), data = mydata)[, -1]  # Exclude intercept column
-y <- mydata[, response]
-
-# Define number of folds for cross-validation
-nfolds <- 10
-
-# Perform cross-validation
-cv_model <- cv.glmnet(x, y, alpha = 1, nfolds = nfolds)  # Use alpha = 1 for LASSO regression
-
-# Extract selected predictors
-selected_predictors <- rownames(coef(cv_model, s = "lambda.min"))[-1]  # Exclude intercept column
-
-# Print selected predictors
-print(paste("Selected predictors:", paste(selected_predictors, collapse = ", ")))
+# Print the best combination of predictors
+print("Best combination of predictors for random forest model:")
+print(best_predictors_rf)
+print(best_rmse_rf)
 ```
 
-The LASSO regression result includes some specific levels in variables instead of the entire variables. 
+Since the measurement of obesity also can be shown by different degree levels, I will use obesity level as a new outcome and fit logistic models to the dataset so that more possibilities can be listed and more models can be compared.
 
-Using CV to test evaluate the model with all predictors.
-
-```{r}
-# Define predictors and response variable
-predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
-interaction_terms <- c("Gender_Age", "FAF_Water")
-response <- "BMI"
-
-# Create interaction terms in data
-mydata$Gender_Age <- mydata$Gender * mydata$Age
-mydata$FAF_Water <- mydata$FAF * mydata$Water
-
-# Define training control with repeated k-fold cross-validation
-train_control1 <- trainControl(method = "repeatedcv", 
-                              number = 10,       # Number of folds
-                              repeats = 3)       # Number of repetitions
-
-# Define the model formula
-formula_CV <- as.formula(paste(response, "~", paste(c(predictors, interaction_terms), collapse = " + ")))
-
-# Train the model using cross-validation
-model <- train(formula_CV,
-               data = mydata,
-               method = "lm",                    # Use linear regression
-               trControl = train_control1,       # Use defined training control
-               preProcess = c("center", "scale"),  # Preprocess data
-               metric = "RMSE")                    # Use RMSE as the metric
-
-# Print the cross-validation results
-print(model)
-```
-
-I will also try to use obesity level which is categorical variable so I can use DA models to fit the data and might compare the result with linear models. There are totally 7 categories classified by the original authors of the dataset.
+First, I can use discriminant analysis model to fit the data since here are totally 7 categories classified by the original authors of the dataset.
 
 ```{r}
-library(MASS)
-library(caret)
-
 # Define the outcome variable
 outcome <- "Obesity"
 
 # Define predictor variables
-predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
-
-# Create a training/testing split
-set.seed(123)  # Set seed for reproducibility
-trainIndex3 <- createDataPartition(mydata$Obesity, p = 0.8, list = FALSE)
-trainData3 <- mydata[trainIndex, ]
-testData3 <- mydata[-trainIndex, ]
+predictors_updated <- c(predictors, "Gender_Age", "FAF_Water")
 
 # Initialize variables to store results
 best_subset_DA <- NULL
 best_accuracy_DA <- 0
 
+# Create cross-validation folds
+cv_fold1 <- createFolds(trainData$Obesity, k = 10)
+
 # Iterate through all possible combinations of predictors
-for (i in 1:length(predictors)) {
-  subsets3 <- combn(predictors, i)
-  for (j in 1:ncol(subsets3)) {
-    predictors_subset_DA <- subsets3[, j]
+for (i in 1:length(predictors_updated)) {
+  subsets <- combn(predictors_updated, i)
+  for (j in 1:ncol(subsets)) {
+    predictors_subset_DA <- subsets[, j]
     
-    # Fit the DA model using the subset of predictors
-    formula_DA <- as.formula(paste(outcome, "~", paste(predictors_subset_DA, collapse = " + ")))
-    model_DA <- lda(formula_DA, data = trainData3)
+    # Initialize variable to store accuracy for each fold
+    fold_accuracies <- numeric(length(cv_fold1))
     
-    # Make predictions on the testing set
-    predicted_DA <- predict(model_DA, newdata = testData3)$class
+    # Perform cross-validation
+    for (fold_index in seq_along(cv_fold1)) {
+      # Extract training and validation indices for current fold
+      train_indices <- unlist(cv_fold1[-fold_index])
+      validation_indices <- cv_fold1[[fold_index]]
+      
+      # Fit the DA model using the subset of predictors on the training data for the current fold
+      formula_DA <- as.formula(paste(outcome, "~", paste(predictors_subset_DA, collapse = " + ")))
+      model_DA <- lda(formula_DA, data = mydata[train_indices, ])
+      
+      # Make predictions on the validation set
+      predicted_DA <- predict(model_DA, newdata = trainData[validation_indices, ])
+      
+      # Calculate accuracy for the current fold
+      fold_accuracies[fold_index] <- mean(predicted_DA$class == mydata$Obesity[validation_indices])
+    }
     
-    # Calculate accuracy
-    accuracy_DA <- mean(predicted_DA == testData3$Obesity)
+    # Calculate average accuracy across all folds
+    average_accuracy <- mean(fold_accuracies)
     
     # Update best subset and accuracy if current accuracy is higher
-    if (accuracy_DA > best_accuracy_DA) {
+    if (average_accuracy > best_accuracy_DA) {
       best_subset_DA <- predictors_subset_DA
-      best_accuracy_DA <- accuracy_DA
+      best_accuracy_DA <- average_accuracy
     }
   }
 }
 
 # Print the best subset of predictors and accuracy
 print(paste("Best subset of predictors:", paste(best_subset_DA, collapse = ", ")))
-print(paste("Best accuracy:", best_accuracy_DA))
+print(paste("Best average accuracy:", best_accuracy_DA))
 ```
 
-Adding 2 interactions to the DA model.
+I also need to know the null model result for this dataset.
 
 ```{r}
-# Define the outcome variable
+# Calculate the frequency of each category in the outcome variable
+outcome_frequency <- table(trainData$Obesity)
+
+# Find the most frequent category
+most_frequent_category <- names(outcome_frequency)[which.max(outcome_frequency)]
+
+# Create a vector of predicted values with the most frequent category
+predicted_outcome <- rep(most_frequent_category, nrow(trainData))
+
+# Calculate the accuracy of the null model
+accuracy_null_model <- sum(predicted_outcome == trainData$Obesity) / length(trainData$Obesity)
+
+# Print the accuracy
+print(paste("Accuracy of the null model:", accuracy_null_model))
+```
+
+Then, I choose another model that can also handle multicategorical outcome named Multinominal Logistic Regression.
+
+```{r}
+# Define outcome variable
 outcome <- "Obesity"
 
-# Update list of predictors to include interaction terms
-predictors_updated <- c(predictors, "Gender_Age", "FAF_Water")
-
-# Create a training/testing split
-set.seed(123)  # Set seed for reproducibility
-trainIndex4 <- createDataPartition(mydata$Obesity, p = 0.8, list = FALSE)
-trainData4 <- mydata[trainIndex, ]
-testData4 <- mydata[-trainIndex, ]
-
-# Create interaction terms in training and testing data
-trainData4$Gender_Age <- trainData4$Gender * trainData4$Age
-trainData4$FAF_Water <- trainData4$FAF * trainData4$Water
-
-testData4$Gender_Age <- testData4$Gender * testData4$Age
-testData4$FAF_Water <- testData4$FAF * testData4$Water
+# Create formula
+formula_mlr <- as.formula(paste(outcome, "~", paste(predictors_updated, collapse = " + ")))
 
 # Initialize variables to store results
-best_subset_DA_U <- NULL
-best_accuracy_DA_U <- 0
+best_accuracy_mlr <- 0
+best_predictors_mlr <- NULL
 
-# Iterate through all possible combinations of predictors
-for (i in 1:length(predictors_updated)) {
-  subsets4 <- combn(predictors_updated, i)
-  for (j in 1:ncol(subsets4)) {
-    predictors_subset_DA_U <- subsets4[, j]
-    
-    # Fit the DA model using the subset of predictors
-    formula_DA_U <- as.formula(paste(outcome, "~", paste(predictors_subset_DA_U, collapse = " + ")))
-    model_DA_U <- lda(formula_DA_U, data = trainData4)
-    
-    # Make predictions on the testing set
-    predicted_DA_U <- predict(model_DA_U, newdata = testData4)$class
-    
-    # Calculate accuracy
-    accuracy_DA_U <- mean(predicted_DA_U == testData4$Obesity)
-    
-    # Update best subset and accuracy if current accuracy is higher
-    if (accuracy_DA_U > best_accuracy_DA_U) {
-      best_subset_DA_U <- predictors_subset_DA_U
-      best_accuracy_DA_U <- accuracy_DA_U
-    }
+# Perform cross-validation
+for (fold in 1:10) {
+  # Extract indices for training and validation data for current fold
+  train_indices <- unlist(cv_fold1[-fold])
+  validation_indices <- cv_fold1[[fold]]
+  
+  # Fit the Multinomial Logistic Regression model
+  model_mlr <- multinom(formula_mlr, data = trainData[train_indices, ])
+  
+  # Make predictions on the validation set
+  predicted_mlr <- predict(model_mlr, newdata = trainData[validation_indices, ], type = "class")
+  
+  # Calculate accuracy
+  accuracy_mlr <- mean(predicted_mlr == trainData$Obesity[validation_indices])
+  
+  # Update best_accuracy and best_predictors if current accuracy is higher
+  if (accuracy_mlr > best_accuracy_mlr) {
+    best_accuracy_mlr <- accuracy_mlr
+    best_predictors_mlr <- predictors_updated
   }
 }
 
-# Print the best subset of predictors and accuracy
-print(paste("Best subset of predictors:", paste(best_subset_DA_U, collapse = ", ")))
-print(paste("Best accuracy:", best_accuracy_DA_U))
+# Print the best predictor combination and highest accuracy
+print(paste("Best predictor combination:", paste(best_predictors_mlr, collapse = ", ")))
+print(paste("Highest Accuracy:", best_accuracy_mlr))
 ```
-After adding 2 interactions, the accuracy increased a little bit.
 
-Using cross validation to evaluate the model.
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Model                             | Predictor                                 | Metric Value  | Metric Value on testing data |
++===================================+===========================================+===============+==============================+
+| Linear null                       | \-                                        | RMSE=8.00     | RMSE=8.04                    |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Linear regression 1               | Age, History, Alcohol, MTRANS             | RMSE=0.62     | RMSE=6.61                    |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Linear regression 2               | All                                       | RMSE=6.30     | RMSE=3.99                    |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Linear regression 2 + LASSO model | All                                       | RMSE=7.38     | RMSE=7.38                    |
+|                                   |                                           |               |                              |
+|                                   |                                           | l=0.0011      |                              |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Random forest                     | Gender, Age, History, Water, Alcohol, FAF | RMSE=3.22     | RMSE=3.97                    |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Logistic null                     | \-                                        | Accuracy=0.17 |                              |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Discriminant analysis             | All                                       | Accuracy=0.50 | Accuracy=0.48                |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+| Multinominal logistic regression  | All                                       | Accuracy=0.58 | Accuracy=0.52                |
++-----------------------------------+-------------------------------------------+---------------+------------------------------+
+
+Then I will use testData to assess the quality to the model that I choose.
 
 ```{r}
-# Define predictors and response variable
-mydata$Obesity <- factor(mydata$Obesity)
-predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
-interaction_terms <- c("Gender_Age", "FAF_Water")
-outcome <- "Obesity"
+# Define formula for random forest
+formula_rf_test <- as.formula(paste("BMI ~", paste(predictors_updated, collapse = " + ")))
 
-# Define the model formula
-formula_CV_DA <- as.formula(paste(outcome, "~", paste(c(predictors, interaction_terms), collapse = " + ")))
+# Fit random forest model using the entire training data
+model_rf_test <- randomForest(formula = formula_rf_test, data = trainData)
 
-# Set seed for reproducibility
-set.seed(1234)
+# Make predictions on the test data
+predictions_rf_test <- predict(model_rf_test, newdata = testData)
 
-# Create 10-fold cross-validation folds
-new_folds <- vfold_cv(mydata, v = 10)
+# Calculate RMSE on test data
+rmse_rf_test <- sqrt(mean((testData$BMI - predictions_rf_test)^2))
 
-# Define model specification
-lda_spec <- discrim_linear() %>%
-  set_engine("MASS") %>%
-  set_mode("classification")
+# Print RMSE on test data
+print(rmse_rf_test)
 
-# Workflow for model with specified predictors
-lda_model <- workflow() %>%
-  add_model(lda_spec) %>%
-  add_formula(formula_CV_DA)
+# Null model of test data
+# Compute the mean BMI from the training data
+mean_bmi_train <- mean(trainData$BMI)
 
-# Workflow for model using all predictors
-lda_wf <- workflow() %>%
-  add_model(lda_spec) %>%
-  add_formula(formula_CV_DA)
+# Create a vector of predicted values equal to the mean BMI from training data for the test data
+predicted_bmi_test <- rep(mean_bmi_train, nrow(testData))
 
-# Perform CV model training and evaluation
-lda_CV <- lda_wf %>%
-  fit_resamples(resamples = new_folds, metrics = metric_set(accuracy))
+# Calculate RMSE (Root Mean Squared Error) on test data
+rmse_null_test <- sqrt(mean((testData$BMI - predicted_bmi_test)^2))
 
-# Collect RMSE values
-collect_metrics(lda_CV)
+# Print the results
+print(paste("Null Model RMSE on Test Data:", rmse_null_test))
+
+# Create a data frame for plotting
+plot_data_rf <- data.frame(Observed = testData$BMI, 
+                           Predicted_RF = predictions_rf_test,
+                           Predicted_Null = predicted_bmi_test)
+
+# Plot using ggplot
+p_rf <- ggplot(plot_data_rf, aes(x = Observed, y = Predicted_RF)) +
+  geom_point(color = "blue", size = 2, shape = 16) +
+  geom_point(aes(y = Predicted_Null), color = "green", size = 2, shape = 16) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  labs(x = "Observed BMI", y = "Predicted BMI", title = "Observed vs Predicted BMI") +
+  theme_minimal() +
+  theme(legend.position = "top") +
+  scale_shape_manual(values = c(16, 16)) +
+  scale_color_manual(values = c("blue", "green")) +
+  guides(color = guide_legend(title = "Model"))
+
+plot(p_rf)
+
+# save the plot
+figure_file = here("results","figures","Observed-Predicted .png")
+ggsave(filename = figure_file, plot=p_rf) 
+```
+
+```{r}
+# Define formula for mlr model
+formula_mlr_test <- as.formula(paste("Obesity ~", paste(predictors_updated, collapse = " + ")))
+
+# Fit the Multinomial Logistic Regression model using the entire training data
+model_mlr_test <- multinom(formula_mlr_test, data = trainData)
+
+# Make predictions on the test data
+predicted_mlr_test <- predict(model_mlr_test, newdata = testData, type = "class")
+
+# Calculate accuracy on the test data
+accuracy_mlr_test <- mean(predicted_mlr_test == testData$Obesity)
+
+# Print the accuracy
+print(paste("Accuracy of the MLR model on test data:", accuracy_mlr_test))
+```
+
+Here I try to assess every model I choose and check the result.
+
+```{r}
+# Compute the mean BMI from the training data
+mean_bmi_training <- mean(trainData$BMI)
+
+# Create a vector of predicted values equal to the mean BMI from training data
+predicted_bmi_test <- rep(mean_bmi_train, nrow(testData))
+
+# Calculate RMSE on test data
+rmse_null_test <- sqrt(mean((testData$BMI - predicted_bmi_test)^2))
+
+# Print the RMSE
+print(paste("Null Model RMSE on Test Data:", rmse_null_test))
+
+# Initialize variable to store predictions on the test set
+predictions_lm1_test <- rep(NA, nrow(testData))
+
+# Update the formula to include Age, History, Alcohol, and MTRANS as predictors
+formula_lm1_test <- paste("BMI ~ Age + History + Alcohol + MTRANS")
+
+# Fit the linear regression model using the updated formula and the training data
+model_lm1_test <- lm(formula_lm1_test, data = trainData)
+
+# Make predictions on the test set
+predictions_lm1_test <- predict(model_lm1_test, newdata = testData)
+
+# Calculate RMSE on the test data
+RMSE_lm1_test <- sqrt(mean((testData$BMI - predictions_lm1_test)^2))
+
+# Print the RMSE on the test data
+print(paste("RMSE on test data:", RMSE_lm1_test))
+
+# Define formula for linear model 2
+formula_lm2_test <- as.formula(paste("BMI ~", paste(predictors_updated, collapse = " + ")))
+
+# Fit linear model 2 model using the entire training data
+model_lm2_test <- randomForest(formula = formula_lm2_test, data = trainData)
+
+# Make predictions on the test data
+predictions_lm2_test <- predict(model_lm2_test, newdata = testData)
+
+# Calculate RMSE on test data
+rmse_lm2_test <- sqrt(mean((testData$BMI - predictions_lm2_test)^2))
+
+# Print RMSE on test data
+print(rmse_lm2_test)
+
+# Fit the LASSO model using the optimal lambda
+lasso_model_optimal <- glmnet(as.matrix(trainData[, predictors_updated]), trainData$BMI, alpha = 1, lambda = 0.0011)
+
+# Make predictions on the test data using the optimal LASSO model
+predictions_lasso_test <- predict(lasso_model_optimal, newx = as.matrix(testData[, predictors_updated]))
+
+# Calculate RMSE on the test data
+rmse_lasso_test <- sqrt(mean((testData$BMI - predictions_lasso_test)^2))
+
+# Print RMSE on test data
+print(rmse_lasso_test)
+
+# Create a vector of predicted values with the most frequent category for testData
+predicted_outcome_test <- rep(most_frequent_category, nrow(testData))
+
+# Calculate the accuracy of the null model on testData
+accuracy_null_model_test <- sum(predicted_outcome_test == testData$Obesity)/ length(testData$Obesity)
+
+# Print the accuracy
+print(paste("Accuracy of the null model on test data:", accuracy_null_model_test))
+
+# Define formula for DA model
+formula_DA_test <- as.formula(paste("Obesity ~", paste(predictors_updated, collapse = " + ")))
+
+# Fit the DA model using the entire training data
+model_DA_test <- lda(formula_DA_test, data = trainData)
+
+# Make predictions on the test data
+predicted_DA_test <- predict(model_DA_test, newdata = testData)
+
+# Calculate accuracy on the test data
+accuracy_DA_test <- mean(predicted_DA_test$class == testData$Obesity)
+
+# Print the accuracy
+print(paste("Accuracy of the DA model on test data:", accuracy_DA_test))
 ```
 
 # Notes
 
 For your own explorations, tables and figures can be "quick and dirty". As long as you can see what's going on, there is no need to polish them. That's in contrast to figures you'll produce for your final products (paper, report, presentation, website, etc.). Those should look as nice, polished and easy to understand as possible.
-
-

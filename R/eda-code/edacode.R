@@ -24,12 +24,26 @@ bc1 <- ggplot(mydata, aes(x = Gender)) +
 plot(bc1)
 
 # histogram of population by age
+# histogram of population by age
+# Calculate the bin edges and labels
+bin_data <- mydata %>%
+  mutate(bin = cut(Age, breaks = c(0, 10, 20, 30, 40, 50, 60, 70, Inf), 
+                   labels = FALSE, include.lowest = TRUE)) %>%
+  group_by(bin) %>%
+  summarise(bin_min = min(Age), bin_max = max(Age)) %>%
+  mutate(bin_min = as.integer(bin_min),  # Convert bin_min to integer
+         bin_max = as.integer(bin_max),  # Convert bin_max to integer
+         bin_label = sprintf("%d-%d", bin_min, bin_max))  # Format bin labels
+
 hp2 <- ggplot(mydata, aes(x = Age)) +
-  geom_histogram(binwidth = 5, fill = "grey", color = "black") +
+  geom_histogram(binwidth = 10, fill = "grey", color = "black") +
   labs(x = "Age", y = "Count", title = "Histogram of Age distribution") +
-  stat_bin(binwidth = 5, geom = "text", aes(label = ..count..),
+  stat_bin(binwidth = 10, geom = "text", aes(label = ..count..),
            vjust = -0.5, color = "black", size = 3)  +
-  theme_minimal()
+  geom_text(data = bin_data, aes(x = bin_min + (bin_max - bin_min)/2 - 5, y = -5, label = bin_label),
+            vjust = +1.2, size = 3, color = "black") +  # Add text labels for bins
+  theme_minimal() +
+  theme(axis.text.x = element_text(size = 8))  # Adjust the size of x-axis text
 plot(hp2)
 # bar chart of obesity level distribution
 bc3 <- ggplot(mydata, aes(x = Obesity)) +
