@@ -49,7 +49,7 @@ In 2022, 22 states had at least 35% of adults with obesity, up from 19 states in
 Ten years ago, CDC said, no state had an adult obesity prevalence at or above 35%.
 
 Obesity level is basically defined by Body Mass Index ([BMI](https://www.cdc.gov/obesity/basics/adult-defining.html)).
-BMI is a person’s weight in kilograms divided by the square of height in meters.
+BMI is a person's weight in kilograms divided by the square of height in meters.
 A high BMI can indicate high body fatness.
 BMI less than 18.5 is defined as underweight; BMI range between 18.5-24.9 falls within the healthy weight range.
 If BMI is from 25 to 29.9, then the person is regarded as overweight.
@@ -238,7 +238,7 @@ Then since random forest model selects all predictors and RMSE value is relative
 The figure below shows the prediction condition using random forest model together with the null model on testing data.
 Both sides of the 45 degree line have outliners and the scatters are not clustered close enough to this line which indicates the prediction is not really well.
 
-![](images/Observed-Predicted .png){width="2100"}
+![](images/Observed-Predicted%20.png){width="2100"}
 
 As for obesity level as a categorical outcome, logistic models are fit to the data.
 And I use accuracy as the performance metric for this evaluation.
