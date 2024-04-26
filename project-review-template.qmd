@@ -1,0 +1,173 @@
+---
+title: Project Review Template 
+author: Taylor Glass
+date: 4-22-24
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+---
+
+# Overview
+
+Title of project: Explore the factors that may be associated with obesity
+
+Name of project author(s): Xueyan Hu
+
+Name of project reviewer: Taylor Glass
+
+
+# Specific project content evaluation
+
+
+## Background, Context and Motivation
+How well is the context of the project described? Is a comprehensive background, including summary of previous/related work given? Is the project well placed into the context of existing work (including proper referencing of existing work). Is it clear why the project was undertaken and what new information it hopes to provide?
+
+### Feedback and Comments
+
+Your background content is thorough, and I appreciate the detailed breakdown of BMI related to obesity. I recommend adding an explanation for what a KOL is and how drinking water can lead to higher metabolic levels. The citations you have included are great, but I think you need to add one for the prevalence information of obesity in the United States and the statements about the factors that affect obesity. Consider adding a source about previous obesity research that focuses on the same factors you study with your dataset.  
+
+### Summary assessment
+* some contextualization and motivation
+
+
+## Question description
+How well and clear are the question(s)/hypotheses the project aims to address described? Is it clear how the questions relate to the data?
+
+
+### Feedback and Comments
+
+I find your questions to be clear, and I know that physical activity and drinking water are the two factors that most closely predict obesity. I know your questions are related to your data because observations are labeled with the obesity class variable that has 7 levels. I think stuying alcohol consumption and obesity will be very interesting. 
+
+### Summary assessment
+* question/hypotheses fully clear
+
+
+## Data description
+How well is the data overall described? Is the source provided? Is a codebook or other meta-information available that makes it clear what the data is? 
+
+### Feedback and Comments
+
+The source for the data is provided, but I recommend adding details about the website itself and the survey used to collect the information. When I visited the link myself, I see that 77% of the data was generated synthetically, which is worth mentioning. I see there is a variable table on the website as well, but it is great that you also include a codebook in the processing file. However, the codebook you include is only a list of the variables. Is there a way to download the variable table from the website since it has a little more information. I recommend adding a quick list of the variables included in the dataset in your summary to give a better idea of the direction you are headed in with your analysis. 
+
+### Summary assessment
+* source and overall structure of data somewhat explained
+
+
+## Data wrangling and exploratory analysis
+How well is the data cleaned/processed and explored? Are all steps reasonable and well explained? Are alternatives discussed and considered? Are meaningful exploratory results shown (e.g. in the supplementary materials)?
+
+### Feedback and Comments
+
+Remember to delete all the information in your quarto documents that is not necessary for your project, including his original instructions! I also think you only need 1 version of the processing file. In your processing file, there is a link to Titanic data, which I do not think is relevant to the project. Your processing code ran smoothly. I loaded the processed data in the EDA document without any issues, and I like that you added blue and pink to the gender bar graph! I think it would be helpful to include an explanation of the 7 different obesity levels because I don't know what the difference between obese1, obese2, obese3, etc is. I think your gender distribution by obesity level graph is really great! The explanation of the violin plot in the manuscript is so thorough, and I am really impressed with the information you included from another source to support your findings. The additional results in the supplementary material are well-labeled and easy to navigate through.
+
+### Summary assessment
+* essentially no weaknesses in wrangling and exploratory component
+
+
+
+## Appropriateness of Analysis
+Were the analysis methods appropriate for the data? Was the analysis done properly? Were different components of the analysis (e.g. performance measure, variable selection, data pre-processing, model evaluation) done in the best way possible and explained well?
+
+### Feedback and Comments
+
+I would say that the analysis methods are appropriate because linear models would have been my first choice as well, and I think it was smart to investigate the correlation with transportation methods. I think it is great that you tried several combinations of your predictors in your linear models because you got to explore interaction effects. I like that you explained why you used the RMSE performance metric, and I think it is a good choice. I had no issue splitting the data into testing and training pieces, but I got an error saying 'object minRMSE1 not found' when I tried to run iterate through all possible combinations of predictors in your cross-validation for-loop. The next code chunk ran fine, and I see the null model RMSE with cross-validation value. In the next code chunk with the `predictors_updated` object, I get an error saying this:Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = object$xlevels) : factor Alcohol has new levels 4. I think you need to adjust the levels in the new data to match the ones in your training data. I recommend starting by exploring the "new" levels, and then reassigning them to the training data. The LASSO model code ran without any errors, but I did get several warnings about NAs introduced by coercion. I am not sure where they are coming from, but I did some research and found that glmnet does not accept NA values, which can skew your coefficient estimates. I think you need to use the as.numeric() function with your predictors_updated before you run the LASSO regression. If that does not fix it, then I recommend trying to impute the missing values. When I ran the random forest model, I got this error: 'Error in all_predictors[1:i] : object of type 'closure' is not subsettable'. I think the issue might be with your `predictors_updated` object because you include the `predictors` variable in it. I would recommend listing out each predictor in that vector just to be safe. I am super impressed that you attempted discriminant analysis, and I think it is appropriate here because your outcome of BMI is interval based. Unfortunately, I got this error when I ran that code: "Error in lda.default(x, grouping, ...) : variable 3 appears to be constant within groups;" If variable 3 really is constant, then I would consider taking it out of your LDA because it is crucial that there is variability in each term included in the model. If you feel that it is important for your model, then consider creating an interaction term to increase variability. I am wondering if I ran your code out of order, so consider adding instructions in your manuscript about how to reproduce your project if that is the case. The rest of your code ran without any errors from the code chunk creating the null model through the end of the exploratory-analysis.qmd, and I love the table you created with all the different RMSE values before and after testing and training. I can see your observed versus predicted plot, and I agree there is overfitting based on all the scatter. I respect that you did not choose the model with the best RMSE because you feel like physical activity is an important factor for your outcome, and I think choosing the random forest model is a great decision! 
+
+### Summary assessment
+* strong and reasonable analysis
+
+## Presentation
+How well are results presented? Are tables and figures easy to read and understand? Are the main figures/tables publication level quality? 
+
+### Feedback and Comments
+
+I think your results are presented well, especially with the explanations you provide from your exploratory data analysis. Violin plots are a little difficult to intepret, but your explanation is great. I find all the other tables and figures to be high quality. I think using `gtsummary` or the `kable()` function to make a table would bring your table up to publication level quality, but it is very clean and easy to read when using the manual quarto syntax. I think it could be helpful to include some tables with coefficient estimates from your linear regression model in the basic statistical analysis section just to provide a little more detail on your linear models. You did a good job acknowledging interaction between some of the predictors, but I think seeing the tables with the coefficient estimates will help your argument. Your explanation of the results from your testing and training data is very helpful and well thought out. You highlight LASSO regression as a good choice here, but I see you picked RF for your final model at this point. I recommend adding a little detail in the full analysis section about why you finally chose the LASSO regression as I saw in your discussion section. I think that would help with consistency. 
+
+### Summary assessment
+* results are presented ok, with room for improvement
+
+
+## Discussion/Conclusions
+Are the study findings properly discussed? Are strengths and limitations acknowledged? Are findings interpreted properly?
+
+### Feedback and Comments
+I like that you include a full list of predictors that are important to your outcome in your discussion section, and I think you justified why you chose LASSO regression well. I think your strengths and limitations are both appropriate, but I recommend mentioning the overfitting of your model in the limitations section as well. I think the findings for the model with all the predictors are interpreted properly because you acknowledge all the factors that contribute to obesity. I suggest adding information about which predictor was the strongest and weakeast to build out the discussion of your findings because I did not see any information about the LASSO regression coefficients and how much they were reduced from the original model. I also recommend adding a short summary about the gender and age distribution of your dataset that you discussed in your exploratory analysis. 
+
+
+### Summary assessment
+* minor parts wrong, missing or unclear
+
+
+## Further comments
+
+_Add any other comments regarding the different aspects of the project here. Write anything you think can help your classmate improve their project._
+I really like that you explored so many different models and included testing and training models for each one. Since you chose LASSO regression as your final model, I think it would be great to include tuning for your penalty parameter. There is an autoplot() function that will show you the RMSE scores based on parameter penalties once you use the tuning grid like we did in the class exercise, which will help you determine if you used an appropriate penalty. Other than that, I feel like you explored many things with a lot of detail!  
+
+
+# Overall project content evaluation
+Evaluate overall features of the project  by filling in the sections below.
+
+
+## Structure
+Is the project well structured? Are files in well labeled folders? Do files have reasonable names? Are all "junk" files not needed for analysis/reproduction removed? By just looking at files and folders, can you get an idea of how things fit together?
+
+### Feedback and Comments
+
+The project is well-structured, and all the files have reasonable names. I like that you grouped all the code together, but I recommend changing the "R" folder name to "code" because the whole project is in R. I get an idea of where to start by just looking at the files and folders, but some of the junk files still need to be removed from the 3 code folders. I also see a couple copies of the manuscript that I do not think need to be kept. Make sure to update all the READMe files as well!
+
+### Summary assessment
+* well structured
+
+
+## Documentation 
+How well is the project documented? Are you able to understand each step of the whole analysis, each decision that was made, and each line of code? Is enough information provided as comments in code or as part of Rmd files? 
+
+### Feedback and Comments
+
+I recommend updating the main README.md file to include information on how to reproduce your project. I see that your supplementary material includes where to start for reproducing the project, but I do not think that is the best location for this information. I think more information in the methods section would be helpful. Consider adding a full list of the models you chose with an explanation of what the performance metrics mean. I think the data cleaning section in your processing file could include more comments in the code because I am not completely sure why you recoded the gender and alcohol variables the way you did. I think your eda and exploratory-analysis codes are well explained with a lot of comments. I understand why you made each decision, so just consider adding details about why you chose the LASSO regression for the final model as I discussed earlier. 
+
+### Summary assessment
+* fully and well documented
+
+
+
+## Reproducibility
+Are all results fully reproducible? Is documentation provided which clearly explains how to reproduce things, and does it work without the need for any manual intervention? Are you able to re-run the whole analysis without having to do manual interventions/edits?
+
+### Feedback and Comments
+
+I had trouble reproducing the exploratory-analysis.qmd with the cross validation techniques. These are the errors I encountered:
+1) Error: object 'minRMSE1' not found
+2) Error in model.frame.default(Terms, newdata, na.action = na.action, xlev = object$xlevels) : 
+  factor Alcohol has new levels 4
+3) Error in all_predictors[1:i] : 
+  object of type 'closure' is not subsettable
+4) Error in lda.default(x, grouping, ...) :
+variable 3 appears to be constant within groups
+I did not know how to manually intervene or edit in these 4 scenarios. I didn't want to make major changes to your code without consulting you, so I added suggestions for how to fix these errors earlier. All of the other files were fully reproducible without any manual intervention, and I was able to generate all of your figures and tables. 
+
+### Summary assessment
+* small parts not reproducible or required manual intervention 
+
+
+
+## Thoroughness
+How thorough was the overall study? Were alternatives (e.g. different ways of processing the data or different models) considered? Were alternatives discussed? Were the questions/hypotheses fully and thoroughly addressed?
+
+### Feedback and Comments
+
+I think your overall study is very thorough considering you explored a wide range of the models we discussed in class! You covered all the alternative options well, and I like that you created the table comparing performance metrics with training and testing data for each model. I think you did a great job discussing alternatives and explaining why you made your final decisions. Your questions were thoroughly addressed considering each factor affecting obesity was included in your model. Consider trying the tuning process for the random forest model again if you have time based on our in class exercise! Tuning is very important in machine learning, but I think that would be the only way to improve the thoroughness of your project. 
+
+### Summary assessment
+* strong level of thorougness
+
+
+## Further comments
+
+_Add any other comments regarding the overall project here. Write anything you think can help your classmate improve their project._
+I really enjoyed exploring your project, and I am very impressed with all the machine learning techniques you used! I think including how to reproduce your project in the methods section of your manuscript would be very helpful, but that is my last sugggestion. You did an amazing job! 
+
+
+
+
