@@ -1,0 +1,211 @@
+---
+title: Project Review 
+author: ELIZABETH HALL
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+---
+
+# Overview
+
+Title of project: Explore the factors that may be associated with obesity
+
+Name of project author: Xueyan Hu
+
+Name of project reviewer: Elizabeth Hall
+
+------------------------------------------------------------------------
+
+# Specific project content evaluation
+
+------------------------------------------------------------------------
+
+## Background, Context and Motivation
+
+How well is the context of the project described? Is a comprehensive background, including summary of previous/related work given? Is the project well placed into the context of existing work (including proper referencing of existing work). Is it clear why the project was undertaken and what new information it hopes to provide?
+
+### Feedback and Comments
+
+The context of the project is well described and comprehensive, detailing definitions, causes, and other risks associated with obesity. Previous and related works are mentioned and cited and I think this project fits well within the context of the existing work. Clarity on why the project was undertaken could be improved (stating what new info this project aims to contribute), but overall the background, context, and motivation are well explained.
+
+### Summary assessment
+
+-   strong contextualization and motivation
+
+------------------------------------------------------------------------
+
+## Question description
+
+How well and clear are the question(s)/hypotheses the project aims to address described? Is it clear how the questions relate to the data?
+
+### Feedback and Comments
+
+The hypotheses/questions have their own dedicated section and are clearly stated. How the questions are related to the data is not explicitly stated, and could be explained in further detail.
+
+### Summary assessment
+
+-   question/hypotheses somewhat explained
+
+------------------------------------------------------------------------
+
+## Data description
+
+How well is the data overall described? Is the source provided? Is a codebook or other meta-information available that makes it clear what the data is?
+
+### Feedback and Comments
+
+The data section in the manuscript is brief, but does provide the source of the data and some information about collection, however it does not provide a description of the data. There is a codebook for the data under `codebook.xlsx` which provides variables, questions, and values.
+
+While the data is explained, I think more detail could be given in the manuscript, and additional information about the data could be added to the codebook. I'd recommend looking at codebook templates/examples on GitHub as I personally found it super helpful to see what others included in theirs. (I ended up using [this](https://gist.github.com/fmaskari/5886dbcc5ab73f2ea663) codebook template).
+
+### Summary assessment
+
+-   source and overall structure of data somewhat explained
+
+------------------------------------------------------------------------
+
+## Data wrangling and exploratory analysis
+
+How well is the data cleaned/processed and explored? Are all steps reasonable and well explained? Are alternatives discussed and considered? Are meaningful exploratory results shown (e.g. in the supplementary materials)?
+
+### Feedback and Comments
+
+The data cleaning is done well, it is simple but does what it needs to do and is explained within the Quarto files. However there are two additional processing scripts which are not relevant to the project which are present in the `processing-code` folder which need to be removed. There is not much discussion of alternatives, but the exploratory analysis is done well. The exploratory code ran flawlessly, and I was able to generate all graphs. While I think some explanation could be added to the comments of the code, the exploratory analysis otherwise is well explained in the manuscript. There are two additional files in the `eda-code` folder leftover from the template which need to be removed.
+
+### Summary assessment
+
+-   essentially no weaknesses in wrangling and exploratory component
+
+------------------------------------------------------------------------
+
+## Appropriateness of Analysis
+
+Were the analysis methods appropriate for the data? Was the analysis done properly? Were different components of the analysis (e.g. performance measure, variable selection, data pre-processing, model evaluation) done in the best way possible and explained well?
+
+### Feedback and Comments
+
+I think the analysis methods were appropriate for the data. I don't fully understand model fitting in general, but I think that the regression models work well with the data in exploring how various factors influence obesity levels. The different components of the analysis were all done well, and decently explained. My only recommendation is to add more descriptive comments to the code portions.
+
+### Summary assessment
+
+-   strong and reasonable analysis
+
+------------------------------------------------------------------------
+
+## Presentation
+
+How well are results presented? Are tables and figures easy to read and understand? Are the main figures/tables publication level quality?
+
+### Feedback and Comments
+
+Tables and figures are well done and easy to read and understand. All figures/tables include informative text descriptions and are clearly labeled. I'd recommend numbering your tables/figures (e.g. "Figure 1", "Table 2") to bring them up to publication quality, otherwise they are great!
+
+### Summary assessment
+
+-   results are very well presented
+
+------------------------------------------------------------------------
+
+## Discussion/Conclusions
+
+Are the study findings properly discussed? Are strengths and limitations acknowledged? Are findings interpreted properly?
+
+### Feedback and Comments
+
+I agreed with the interpretation of the findings, and the strengths and limitations of the study are acknowledged and clearly explained.
+
+The findings of the study are well discussed, but could be stronger. I'd suggest adding a clearer link between your findings and their implications. I'd also suggest comparing these findings with the findings of other studies to see how they compare. This would help bolster your findings, and provide additional context to the results. Otherwise, this part was great!
+
+### Summary assessment
+
+-   minor parts wrong, missing or unclear
+
+------------------------------------------------------------------------
+
+## Further comments
+
+I really like your project so far! My main suggestion is using a couple more sources to compare your findings to, in order to better contextualize the data and bolster your findings. Great job so far! :\]
+
+------------------------------------------------------------------------
+
+# Overall project content evaluation
+
+------------------------------------------------------------------------
+
+## Structure
+
+Is the project well structured? Are files in well labeled folders? Do files have reasonable names? Are all "junk" files not needed for analysis/reproduction removed? By just looking at files and folders, can you get an idea of how things fit together?
+
+### Feedback and Comments
+
+I think the structure was the weakest part of the project, but this can be easily fixed!
+
+I'd suggest updating all your "read me" files, adding information about the files in each folder, and pointing to additional information where needed. I'd also recommend removing all junk files so that they are not mistaken for project files. If you make an updated codebook, you can also add additional information there about the data processing steps, and what code to run in what order when processing the data to improve clarity.
+
+### Summary assessment
+
+-   poor and confusing structure
+
+------------------------------------------------------------------------
+
+## Documentation
+
+How well is the project documented? Are you able to understand each step of the whole analysis, each decision that was made, and each line of code? Is enough information provided as comments in code or as part of Rmd files?
+
+### Feedback and Comments
+
+The project is well documented. Code files have corresponding qmd files, which are thorough in explaining the code. My only (minor) gripe is that the actual R files have few comments within the code. I'd suggest updating these, but otherwise the code is very well documented!
+
+### Summary assessment
+
+-   fully and well documented
+
+------------------------------------------------------------------------
+
+## Reproducibility
+
+Are all results fully reproducible? Is documentation provided which clearly explains how to reproduce things, and does it work without the need for any manual intervention? Are you able to re-run the whole analysis without having to do manual interventions/edits?
+
+### Feedback and Comments
+
+I was unable to reproduce some parts, which I have detailed below:
+
+`exploratorycode.R`
+
+-   Was unable to get the code to work despite manual intervention.
+
+-   I got several errors about missing objects, which I think is due to required packages which are not mentioned in the code.
+
+-   I had to change the data load path to `data_location <- here::here("data","processed-data","processeddata.rds")` in order to get the data to load in.
+
+    -   This issue is fixed in the qmd file, but I'd reccoment updating the main R file as well.
+
+I'd recommend taking a look at your model fitting code and making sure it works. Model fitting is finicky, and I was having similar issues at first and had to fiddle around with things. This is fixable, though! And otherwise things look good, all your other code ran smoothly for me.
+
+### Summary assessment
+
+-   small parts not reproducible or required manual intervention
+
+------------------------------------------------------------------------
+
+## Thoroughness
+
+How thorough was the overall study? Were alternatives (e.g. different ways of processing the data or different models) considered? Were alternatives discussed? Were the questions/hypotheses fully and thoroughly addressed?
+
+### Feedback and Comments
+
+I think the study was decently thorough. Alternative variables are explored, though alternative machine learning models or analysis methods are not discussed. The questions/hypotheses are fully addressed, though could benefit from some cross referencing with other sources.
+
+My main suggestions would be to discuss a couple alternative analysis methods/ML models and to bolster your findings with the findings from other studies.
+
+### Summary assessment
+
+-   decent level of thoroughness
+
+------------------------------------------------------------------------
+
+## Further comments
+
+Your project is looking good so far! All the issues I listed are easily fixable, and non major. I especially liked how you visualized your data. :\] I can't wait to see this finished!
