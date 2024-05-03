@@ -5,22 +5,6 @@ date: "03/22/2024"
 output: html_document
 ---
 
-This Quarto file loads the cleaned data and does some exploring.
-
-I'm only showing it the way where the code is included in the file. As described in the `processing_code` materials, I currently prefer the approach of having R code in a separate file and pulling it in.
-
-But I already had this written and haven't yet re-done it that way. Feel free to redo and send a pull request on GitHub :)
-
-Again, it is largely a matter of preference and what makes the most sense to decide if one wants to have code inside Quarto files, or as separate R files. And sometimes, an R script with enough comments is good enough and one doesn't need a Quarto file.
-
-Also note that while here I split cleaning and exploring, this is iterative. You saw that as part of the processing, we already had to explore the data somewhat to understand how to clean it. In general, as you explore, you'll find things that need cleaning. As you clean, you can explore more. Therefore, at times it might make more sense to combine the cleaning and exploring code parts into a single R or Quarto file. Or split things in any other logical way.
-
-As part of the exploratory analysis, you should produce plots or tables or other summary quantities for the most interesting/important quantities in your data. Depending on the total number of variables in your dataset, explore all or some of the others. Figures produced here might be histograms or density plots, correlation plots, etc. Tables might summarize your data.
-
-Start by exploring one variable at a time. Then continue by creating plots or tables of the outcome(s) of interest and the predictor/exposure/input variables you are most interested in. If your dataset is small, you can do that for all variables.
-
-Plots produced here can be scatterplots, boxplots, violinplots, etc. Tables can be simple 2x2 tables or larger ones.
-
 # Setup
 
 ```{r}
@@ -136,19 +120,28 @@ saveRDS(lm3_result, file = lm_file)
 Choose predictors only important for the model fitting. Thanks to my classmates' replies, I received some useful suggestion for choosing predictors, which are chi-square, LASSO and lowest RMSE. According to my searching result online, chi-square is good for categorical variable as outcome, and LASSO might shrink the coefficients too much. So I will go with the lowest RMSE in the following and see what will happen next.
 
 ```{r}
+# Filter out observations where Alcohol is 4
+mydata1 <- mydata[mydata$Alcohol != 4, ]
 # Split data into training and testing sets
 set.seed(123)  # Set seed for reproducibility
 trainIndex <- createDataPartition(mydata$BMI, p = 0.8, list = FALSE)
-trainData <- mydata[trainIndex, ]
-testData <- mydata[-trainIndex, ]
+trainData <- mydata1[trainIndex, ]
+testData <- mydata1[-trainIndex, ]
 # Create indices for 10-fold cross-validation
 cv_folds <- createFolds(trainData$BMI, k = 10)
 ```
+
+Since there is only one observation with alcohol consumption level at 4, so after splitting the data, it will be distributed randomly in either trainData or testData. When it is in trainData and the cross-validation is applied, there will be some folds doesn't have this level and error will occur during this process. So I drop it from the dataset to make it working easier.
+
+I will fit the first linear model which is called linear model 1 to the data and use cross-validation, then calculate RMSE. There is no interactions in this model's predictors. And by running this chunk, predictor combination that indicates the lowest RMSE will be selected and shown in the output together with its RMSE.
 
 ```{r}
 # predictors excluding interactions first
 # Define predictors
 predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
+
+# Set seed
+set.seed(123)
 
 # Iterate through all possible combinations of predictors
 for (i in 1:length(predictors)) {
@@ -195,6 +188,8 @@ print(paste("Best subset of predictors:", paste(bestSubset1, collapse = ", ")))
 print(paste("Lowest RMSE:", minRMSE1))
 ```
 
+Then I will calculate RMSE for null model of linear regression.
+
 ```{r}
 # calculate null model RMSE
 # Initialize variable to store total RMSE across all folds
@@ -226,6 +221,8 @@ avg_rmse_null <- total_rmse_null / 10
 print(paste("Null Model RMSE using Cross-Validation:", avg_rmse_null))
 ```
 
+Using the same linear regression named linear model 2 but adding 2 interactions as predictors and under these predictors, best combination with lowest RMSE will be shown in the output.
+
 ```{r}
 # interactions included in predictors
 # Define predictors and response variable
@@ -246,6 +243,9 @@ predictors_updated <- c(predictors, "Gender_Age", "FAF_Water")
 # Initialize variables to store results
 minRMSE2 <- Inf
 bestSubset2 <- NULL
+
+# Set seed
+set.seed(123)
 
 # Iterate through all possible combinations of predictors
 for (i in 1:length(predictors_updated)) {
@@ -295,37 +295,109 @@ print(paste("Lowest RMSE (including interactions) using cross-validation:", minR
 It shows different predictor combinations but the good thing is both of the linear models have lower RMSE than null model which indicates they perform better than null model. Then, I will try LASSO model.
 
 ```{r}
+# Create dummy variables for categorical variables in trainData
+trainData1 <- within(trainData, {
+  History <- as.factor(History)
+  MTRANS <- as.factor(MTRANS)
+})
+dummy_vars_train <- model.matrix(~ History + MTRANS - 1, data = trainData1)
+
+# Combine dummy variables with original trainData
+trainData1 <- cbind(trainData, dummy_vars_train)
+
+# Repeat the same process for testData
+testData1 <- within(testData, {
+  History <- as.factor(History)
+  MTRANS <- as.factor(MTRANS)
+})
+dummy_vars_test <- model.matrix(~ History + MTRANS - 1, data = testData1)
+testData1 <- cbind(testData, dummy_vars_test)
+
+# Define predictors and outcome
+response <- "BMI"
+predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
+interaction_terms <- c("Gender_Age", "FAF_Water")
+
+# Update predictors to include dummy variables
+predictors_lasso <- c("Gender", "Age", "Water", "Alcohol", "FAF","Gender_Age", "FAF_Water", colnames(dummy_vars_train))
+
+
+# Define function to calculate RMSE
+calculate_rmse <- function(predictions, actual) {
+  return(sqrt(mean((actual - predictions)^2)))
+}
+
 # Initialize variables to store results
 min_rmse_lasso <- Inf
 best_subset_lasso <- NULL
 
+# Set seed
+set.seed(123)
+
 # Perform LASSO regression with cross-validation
-lasso_model <- cv.glmnet(as.matrix(trainData[, predictors_updated]), trainData$BMI, alpha = 1, nfolds = 10)
+for (fold in 1:10) {
+  # Extract indices for training and validation data for current fold
+  train_indices <- cv_folds[[fold]]
+  validation_indices <- setdiff(1:nrow(trainData1), train_indices)
+  
+  # Define training and validation data subsets
+  train_data_fold <- trainData1[train_indices, ]
+  validation_data_fold <- trainData1[validation_indices, ]
+  
+  # Create design matrix for training and validation data
+  train_matrix <- model.matrix(~., data = train_data_fold[, predictors_lasso])[,-1]
+  validation_matrix <- model.matrix(~., data = validation_data_fold[, predictors_lasso])[,-1]
+  
+  # Ensure the same variables are present in training and validation matrices
+  common_variables <- intersect(colnames(train_matrix), colnames(validation_matrix))
+  train_matrix <- train_matrix[, common_variables]
+  validation_matrix <- validation_matrix[, common_variables]
+  
+  # Perform LASSO regression with cross-validation
+  lasso_model <- cv.glmnet(train_matrix, train_data_fold$BMI, alpha = 1, lambda = 10^seq(10, -2, length = 100))
+  
+  # Extract optimal lambda value
+  optimal_lambda <- lasso_model$lambda.min
+  
+  # Fit LASSO model using optimal lambda on training data
+  lasso_model_optimal <- glmnet(train_matrix, train_data_fold$BMI, alpha = 1, lambda = optimal_lambda)
+  
+  # Make predictions on validation set
+  predictions_lasso <- predict(lasso_model_optimal, newx = validation_matrix, s = optimal_lambda)
+  
+  # Calculate RMSE on validation set
+  rmse <- sqrt(mean((validation_data_fold$BMI - predictions_lasso)^2))
+  
+  # Update min_rmse and best_subset if CV RMSE is lower
+  if (rmse < min_rmse_lasso) {
+    min_rmse_lasso <- rmse
+    best_subset_lasso <- predictors_lasso  # Include interaction terms
+  }
+}
+
+# Extract non-zero coefficients from the optimal LASSO model
+non_zero_coeffs <- coef(lasso_model_optimal)
+non_zero_coeffs <- non_zero_coeffs[-1]  # Remove intercept
+
+# Find the indices of non-zero coefficients
+non_zero_indices <- which(non_zero_coeffs != 0)
+
+# Extract the names of predictors with non-zero coefficients
+best_subset_names_lasso <- colnames(train_matrix)[non_zero_indices]
 
 # Extract the optimal lambda value
 optimal_lambda <- lasso_model$lambda.min
 
-# Fit the LASSO model using the optimal lambda
-lasso_model_optimal <- glmnet(as.matrix(trainData[, predictors_updated]), trainData$BMI, alpha = 1, lambda = optimal_lambda)
-
-# Compute RMSE on test data using the optimal LASSO model
-predictions_lasso <- predict(lasso_model_optimal, newx = as.matrix(testData[, predictors_updated]))
-rmse_lasso <- sqrt(mean((testData$BMI - predictions_lasso)^2))
-
-# Extract coefficients of the LASSO model
-lasso_coefficients <- as.matrix(coef(lasso_model_optimal))
-
 # Print results
+cat("Lowest RMSE (LASSO CV):", min_rmse_lasso, "\n")
+cat("Best subset of predictors:", paste(best_subset_names_lasso, collapse = ", "), "\n")
+# Print optimal lambda value
 cat("Optimal lambda:", optimal_lambda, "\n")
-cat("RMSE with LASSO:", rmse_lasso, "\n")
-
-# Print non-zero coefficients (selected predictors)
-selected_predictors <- rownames(lasso_coefficients)[lasso_coefficients != 0, drop = FALSE]
-print("Selected predictors by LASSO:")
-print(selected_predictors)
 ```
 
-After that, I will select another regression model to fit data, here I will use random forest model.
+Since I already get optimal lambda above, so I will skip using autoplot function creating figure and tuning the LASSO model.
+
+For trying with more models as comparison, I select another regression model to fit data, here I will use random forest model.
 
 ```{r}
 # Create formula with response and all predictors
@@ -335,6 +407,9 @@ formula_rf <- as.formula(paste(response, "~", paste(predictors_updated, collapse
 # Initialize variables to store results
 best_rmse_rf <- Inf
 best_predictors_rf <- NULL
+
+# Set seed
+set.seed(123)
 
 # Forward selection with cross-validation
 for (fold in seq_along(cv_folds)) {
@@ -347,18 +422,18 @@ for (fold in seq_along(cv_folds)) {
   best_predictors_fold <- NULL
   
   # Forward selection
-  for (i in seq_along(all_predictors)) {
-    predictors_subset_rf <- all_predictors[1:i]
+  for (i in seq_along(predictors_updated)) {
+    predictors_subset_rf <- predictors_updated[1:i]
     formula_subset_rf <- as.formula(paste(response, "~", paste(predictors_subset_rf, collapse = " + ")))
     
     # Fit random forest model using the training data for the current fold
-    model_rf <- randomForest(formula = formula_subset_rf, data = mydata[train_indices, ])
+    model_rf <- randomForest(formula = formula_subset_rf, data = trainData[train_indices, ])
     
     # Make predictions on the validation data for the current fold
-    predictions_rf <- predict(model_rf, newdata = mydata[validation_indices, ])
+    predictions_rf <- predict(model_rf, newdata = trainData[validation_indices, ])
     
     # Calculate RMSE for the current fold
-    rmse_rf <- sqrt(mean((mydata$BMI[validation_indices] - predictions_rf)^2))
+    rmse_rf <- sqrt(mean((trainData$BMI[validation_indices] - predictions_rf)^2))
     
     # Check if current RMSE is better than the best RMSE so far for this fold
     if (rmse_rf < best_rmse_fold) {
@@ -395,6 +470,9 @@ predictors_updated <- c(predictors, "Gender_Age", "FAF_Water")
 best_subset_DA <- NULL
 best_accuracy_DA <- 0
 
+# Set seed
+set.seed(123)
+
 # Create cross-validation folds
 cv_fold1 <- createFolds(trainData$Obesity, k = 10)
 
@@ -415,13 +493,13 @@ for (i in 1:length(predictors_updated)) {
       
       # Fit the DA model using the subset of predictors on the training data for the current fold
       formula_DA <- as.formula(paste(outcome, "~", paste(predictors_subset_DA, collapse = " + ")))
-      model_DA <- lda(formula_DA, data = mydata[train_indices, ])
+      model_DA <- lda(formula_DA, data = trainData[train_indices, ])
       
       # Make predictions on the validation set
       predicted_DA <- predict(model_DA, newdata = trainData[validation_indices, ])
       
       # Calculate accuracy for the current fold
-      fold_accuracies[fold_index] <- mean(predicted_DA$class == mydata$Obesity[validation_indices])
+      fold_accuracies[fold_index] <- mean(predicted_DA$class == trainData$Obesity[validation_indices])
     }
     
     # Calculate average accuracy across all folds
@@ -472,6 +550,9 @@ formula_mlr <- as.formula(paste(outcome, "~", paste(predictors_updated, collapse
 best_accuracy_mlr <- 0
 best_predictors_mlr <- NULL
 
+# Set seed
+set.seed(123)
+
 # Perform cross-validation
 for (fold in 1:10) {
   # Extract indices for training and validation data for current fold
@@ -499,29 +580,29 @@ print(paste("Best predictor combination:", paste(best_predictors_mlr, collapse =
 print(paste("Highest Accuracy:", best_accuracy_mlr))
 ```
 
-+-----------------------------------+-------------------------------------------+---------------+------------------------------+
-| Model                             | Predictor                                 | Metric Value  | Metric Value on testing data |
-+===================================+===========================================+===============+==============================+
-| Linear null                       | \-                                        | RMSE=8.00     | RMSE=8.04                    |
-+-----------------------------------+-------------------------------------------+---------------+------------------------------+
-| Linear regression 1               | Age, History, Alcohol, MTRANS             | RMSE=0.62     | RMSE=6.61                    |
-+-----------------------------------+-------------------------------------------+---------------+------------------------------+
-| Linear regression 2               | All                                       | RMSE=6.30     | RMSE=3.99                    |
-+-----------------------------------+-------------------------------------------+---------------+------------------------------+
-| Linear regression 2 + LASSO model | All                                       | RMSE=7.38     | RMSE=7.38                    |
-|                                   |                                           |               |                              |
-|                                   |                                           | l=0.0011      |                              |
-+-----------------------------------+-------------------------------------------+---------------+------------------------------+
-| Random forest                     | Gender, Age, History, Water, Alcohol, FAF | RMSE=3.22     | RMSE=3.97                    |
-+-----------------------------------+-------------------------------------------+---------------+------------------------------+
-| Logistic null                     | \-                                        | Accuracy=0.17 |                              |
-+-----------------------------------+-------------------------------------------+---------------+------------------------------+
-| Discriminant analysis             | All                                       | Accuracy=0.50 | Accuracy=0.48                |
-+-----------------------------------+-------------------------------------------+---------------+------------------------------+
-| Multinominal logistic regression  | All                                       | Accuracy=0.58 | Accuracy=0.52                |
-+-----------------------------------+-------------------------------------------+---------------+------------------------------+
++-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
+| Model                             | Predictor                                                     | Metric Value  | Metric Value on testing data |
++===================================+===============================================================+===============+==============================+
+| Linear null                       | \-                                                            | RMSE=8.01     | RMSE=7.99                    |
++-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
+| Linear regression 1               | Age, History, Alcohol, MTRANS                                 | RMSE=0.62     | RMSE=6.54                    |
++-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
+| Linear regression 2               | All                                                           | RMSE=6.29     | RMSE=3.81                    |
++-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
+| Linear regression 2 + LASSO model | All                                                           | RMSE=6.34     | RMSE=6.47                    |
+|                                   |                                                               |               |                              |
+|                                   |                                                               | l=0.023       |                              |
++-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
+| Random forest                     | All                                                           | RMSE=3.35     | RMSE=3.97                    |
++-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
+| Logistic null                     | \-                                                            | Accuracy=0.17 | Accuracy=0.15                |
++-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
+| Discriminant analysis             | Gender, Age, History, Water, Alcohol, FAF, MTRANS, Gender_Age | Accuracy=0.50 | Accuracy=0.50                |
++-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
+| Multinominal logistic regression  | All                                                           | Accuracy=0.55 | Accuracy=0.50                |
++-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
 
-Then I will use testData to assess the quality to the model that I choose.
+Then I will use testData to assess the quality to the model that I choose. Between 2 linear regression models I choose random forest model.
 
 ```{r}
 # Define formula for random forest
@@ -576,6 +657,8 @@ figure_file = here("results","figures","Observed-Predicted .png")
 ggsave(filename = figure_file, plot=p_rf) 
 ```
 
+Between 2 logistic models, I choose mlr model.
+
 ```{r}
 # Define formula for mlr model
 formula_mlr_test <- as.formula(paste("Obesity ~", paste(predictors_updated, collapse = " + ")))
@@ -593,7 +676,7 @@ accuracy_mlr_test <- mean(predicted_mlr_test == testData$Obesity)
 print(paste("Accuracy of the MLR model on test data:", accuracy_mlr_test))
 ```
 
-Here I try to assess every model I choose and check the result.
+Since the neither of the model above has satisfying performance, I will try to assess every model I have used for analysis and check the result.
 
 ```{r}
 # Compute the mean BMI from the training data
@@ -642,13 +725,13 @@ rmse_lm2_test <- sqrt(mean((testData$BMI - predictions_lm2_test)^2))
 print(rmse_lm2_test)
 
 # Fit the LASSO model using the optimal lambda
-lasso_model_optimal <- glmnet(as.matrix(trainData[, predictors_updated]), trainData$BMI, alpha = 1, lambda = 0.0011)
+lasso_model_optimal <- glmnet(as.matrix(trainData1[, predictors_lasso]), trainData1$BMI, alpha = 1, lambda = 0.023)
 
 # Make predictions on the test data using the optimal LASSO model
-predictions_lasso_test <- predict(lasso_model_optimal, newx = as.matrix(testData[, predictors_updated]))
+predictions_lasso_test <- predict(lasso_model_optimal, newx = as.matrix(testData1[, predictors_lasso]))
 
 # Calculate RMSE on the test data
-rmse_lasso_test <- sqrt(mean((testData$BMI - predictions_lasso_test)^2))
+rmse_lasso_test <- sqrt(mean((testData1$BMI - predictions_lasso_test)^2))
 
 # Print RMSE on test data
 print(rmse_lasso_test)
@@ -662,8 +745,11 @@ accuracy_null_model_test <- sum(predicted_outcome_test == testData$Obesity)/ len
 # Print the accuracy
 print(paste("Accuracy of the null model on test data:", accuracy_null_model_test))
 
+# Create new predictors for DA model
+predictors_DA <- c("Gender", "Age", "History",  "Water",  "Alcohol", "FAF",  "MTRANS", "Gender_Age")
+
 # Define formula for DA model
-formula_DA_test <- as.formula(paste("Obesity ~", paste(predictors_updated, collapse = " + ")))
+formula_DA_test <- as.formula(paste("Obesity ~ ", paste(predictors_DA, collapse = " + ")))
 
 # Fit the DA model using the entire training data
 model_DA_test <- lda(formula_DA_test, data = trainData)
@@ -677,7 +763,31 @@ accuracy_DA_test <- mean(predicted_DA_test$class == testData$Obesity)
 # Print the accuracy
 print(paste("Accuracy of the DA model on test data:", accuracy_DA_test))
 ```
+I will explore more information for LASSO model.
+```{r}
+# Extract coefficients from the fitted LASSO model
+lasso_coefficients <- coef(lasso_model_optimal)
 
-# Notes
+# Extract non-zero coefficients and their corresponding predictors
+non_zero_indices <- which(lasso_coefficients != 0, arr.ind = TRUE)
+non_zero_coefficients <- lasso_coefficients[non_zero_indices]
 
-For your own explorations, tables and figures can be "quick and dirty". As long as you can see what's going on, there is no need to polish them. That's in contrast to figures you'll produce for your final products (paper, report, presentation, website, etc.). Those should look as nice, polished and easy to understand as possible.
+# Extract names of predictors with non-zero coefficients
+strongest_predictors <- rownames(lasso_coefficients)[non_zero_indices[, "col"]]
+
+# Find the index of the strongest and weakest coefficients
+strongest_index <- which.max(abs(non_zero_coefficients))
+weakest_index <- which.min(abs(non_zero_coefficients))
+
+# Extract the strongest and weakest coefficients and their predictors
+strongest_coefficient <- non_zero_coefficients[strongest_index]
+weakest_coefficient <- non_zero_coefficients[weakest_index]
+strongest_predictor <- strongest_predictors[strongest_index]
+weakest_predictor <- strongest_predictors[weakest_index]
+
+# Print the results
+cat("Strongest predictor:", strongest_predictor, "\n")
+cat("Strongest coefficient:", strongest_coefficient, "\n")
+cat("Weakest predictor:", weakest_predictor, "\n")
+cat("Weakest coefficient:", weakest_coefficient, "\n")
+```

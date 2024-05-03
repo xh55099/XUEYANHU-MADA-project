@@ -7,12 +7,6 @@ output: html_document
 
 # Processing script
 
-This contains the same code and comments/information as `processingcode.R`.
-
-This just shows it as Quarto file, to give you an idea how to do it in a setup that combines code and text in a single file.
-
-See the other Quarto file for my currently preferred approach of pulling code from the R script into the Quarto file.
-
 # Setup
 
 ### load packages
@@ -39,9 +33,8 @@ rawdata <- read.csv(data_location)
 codebook <- here::here("data","raw-data","codebook.xlsx")
 read_excel(codebook)
 ```
-Several ways of looking at the data
 
-The meaning of each variable can be checked [online](https://www.kaggle.com/datasets/yasserh/titanic-dataset/data).
+Several ways of looking at the data
 
 ```{r}
 dplyr::glimpse(rawdata)
@@ -52,7 +45,7 @@ skimr::skim(rawdata)
 
 ### data cleaning
 
-First generating a new variable BMI using height and weight, as well as change some variable names and categorical levels.
+First generating a new variable BMI using height and weight, as well as change some variable names and categorical levels. For more intuitive observation and writing, I will change gender categories to 1 and 2 and name alcohol consumption levels to from 1 to 4.
 
 ```{r}
 d1 <- rawdata %>%
@@ -83,16 +76,8 @@ head(d3)
 
 ### Save data
 
-Finally, we save the clean data as RDS file. I suggest you save your processed and cleaned data as RDS or RDA/Rdata files. This preserves coding like factors, characters, numeric, etc. If you save as CSV, that information would get lost. However, CSV is better for sharing with others since it's plain text. If you do CSV, you might want to write down somewhere what each variable is.
-
-See here for some suggestions on how to store your processed data: http://www.sthda.com/english/wiki/saving-data-into-r-data-format-rds-and-rdata
-
 ```{r}
 processeddata <- d3
 save_data_location <- here::here("data","processed-data","processeddata.rds")
 saveRDS(processeddata, file = save_data_location)
 ```
-
-# Notes
-
-Removing anyone who had "faulty" or missing data is one approach. It's often not the best. based on your question and your analysis approach, you might want to do cleaning differently (e.g. keep individuals with some missing information).

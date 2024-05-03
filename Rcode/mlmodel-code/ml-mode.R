@@ -7,17 +7,34 @@ library(ggplot2)
 
 ## ---- loaddata --------
 #Path to data. Note the use of the here() package and not absolute paths
-data_location <- here::here("starter-analysis-exercise","data","processed-data","processeddata.rds")
+data_location <- here::here("data","processed-data","processeddata.rds")
 #load data
 mydata <- readRDS(data_location)
 
 ## ---- logistic --------
-# Fit multinomial logistic regression model
-#library(nnet)
-#multinom_model <- multinom(FAF ~ MTRANS, data = mydata)
+# Define a function to map transportation modes to numeric values
+map_transport <- function(transport_mode) {
+  if (transport_mode == "Walking") {
+    return(4)
+  } else if (transport_mode == "Motorbike") {
+    return(2)
+  } else if (transport_mode == "Public_Transportation") {
+    return(3)
+  } else if (transport_mode == "Automobile") {
+    return(1)
+  } else {
+    return(0)  # Return 0 for other cases
+  }
+}
 
-# Summary of the model
-#summary(multinom_model)
+# Apply the function to create the new variable
+mydata$MTRANSn <- sapply(mydata$MTRANS, map_transport)
+
+# Calculate correlation coefficient
+correlation <- cor(mydata$FAF, mydata$MTRANSn)
+
+# Print correlation coefficient
+print(correlation)
 
 
 ## ---- lm1 --------
@@ -60,6 +77,8 @@ saveRDS(lm4_result, file = lm_file)
 
 
 ## ---- fitting linear models --------
+# Filter out observations where Alcohol is 4
+mydata1 <- mydata[mydata$Alcohol != 4, ]
 # Split data into training and testing sets
 set.seed(123)  # Set seed for reproducibility
 trainIndex <- createDataPartition(mydata$BMI, p = 0.8, list = FALSE)

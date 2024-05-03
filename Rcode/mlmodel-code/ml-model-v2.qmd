@@ -7,9 +7,9 @@ output: html_document
 
   
   
-This Quarto file loads the cleaned data and does some exploring.
+This Quarto file has the content of machine learning model analysis.
 
-This is essentially the same as the other `exploratory_analysis` Quarto file, but now the code is not inside this file. Instead, it is pulled in from the R script `exploratorycode.R` using the code chunk labels.
+This is essentially the same as the other `ml-model-v1` Quarto file, but now the code is not inside this file. Instead, it is pulled in from the R script `ml-model.R` using the code chunk labels.
 
 
 
