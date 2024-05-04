@@ -143,6 +143,10 @@ predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
 # Set seed
 set.seed(123)
 
+# Initialize variables to store results
+minRMSE1 <- Inf
+bestSubset1 <- NULL
+
 # Iterate through all possible combinations of predictors
 for (i in 1:length(predictors)) {
   subsets1 <- combn(predictors, i)
@@ -585,7 +589,7 @@ print(paste("Highest Accuracy:", best_accuracy_mlr))
 +===================================+===============================================================+===============+==============================+
 | Linear null                       | \-                                                            | RMSE=8.01     | RMSE=7.99                    |
 +-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
-| Linear regression 1               | Age, History, Alcohol, MTRANS                                 | RMSE=0.62     | RMSE=6.54                    |
+| Linear regression 1               | Gender, Age, History, Water, Alcohol, FAF, MTRANS             | RMSE=6.42     | RMSE=6.54                    |
 +-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
 | Linear regression 2               | All                                                           | RMSE=6.29     | RMSE=3.81                    |
 +-----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
@@ -694,8 +698,8 @@ print(paste("Null Model RMSE on Test Data:", rmse_null_test))
 # Initialize variable to store predictions on the test set
 predictions_lm1_test <- rep(NA, nrow(testData))
 
-# Update the formula to include Age, History, Alcohol, and MTRANS as predictors
-formula_lm1_test <- paste("BMI ~ Age + History + Alcohol + MTRANS")
+# Update the formula
+formula_lm1_test <- paste("BMI ~ Gender + Age + History + Water + Alcohol + FAF + MTRANS")
 
 # Fit the linear regression model using the updated formula and the training data
 model_lm1_test <- lm(formula_lm1_test, data = trainData)
@@ -763,7 +767,9 @@ accuracy_DA_test <- mean(predicted_DA_test$class == testData$Obesity)
 # Print the accuracy
 print(paste("Accuracy of the DA model on test data:", accuracy_DA_test))
 ```
+
 I will explore more information for LASSO model.
+
 ```{r}
 # Extract coefficients from the fitted LASSO model
 lasso_coefficients <- coef(lasso_model_optimal)

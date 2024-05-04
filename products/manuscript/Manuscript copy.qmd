@@ -226,7 +226,7 @@ Summary of each machine learning model applied to the data and its metric value 
 +==================================+===============================================================+===============+==============================+
 | Linear null                      | \-                                                            | RMSE=8.01     | RMSE=7.99                    |
 +----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
-| Linear regression 1              | Age, History, Alcohol, MTRANS                                 | RMSE=0.62     | RMSE=6.54                    |
+| Linear regression 1              | Gender, Age, History, Water, Alcohol, FAF, MTRANS             | RMSE=6.42     | RMSE=6.54                    |
 +----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
 | Linear regression 2              | All                                                           | RMSE=6.29     | RMSE=3.81                    |
 +----------------------------------+---------------------------------------------------------------+---------------+------------------------------+
@@ -287,6 +287,10 @@ The result of data analysis indicate that both environmental factors and persona
 It could provide some suggestions from this project that, although BMI might change with aging regard to gender, if someone can do more physical exercise, drink more water and consume less alcohol, it will reduce the risk for getting obesity.
 And relevant departments and organizations can also provide corresponding recommendations and appropriate publicity to increase the awareness of obesity risk factors among residents of these countries and help them develop a healthy lifestyle.
 
+A former study did research on a similar topic with this project, and the analysis indicated that among men, the proportional odds of obesity increase with urban residency, aging, marital status different from single and decrease with current smoking.
+Among women, the proportional odds increase with urban residency, primary educational level, high total blood cholesterol level and high fasting blood glucose level, and decrease with current smoking [@kabor√©2020].
+It proved gender, age are risk or caustic factors for overweight or obesity, as well as other environmental factors and body conditions.
+
 I found simple linear model fitting can answer my questions, which were that alcohol consumption was correlated to obesity, as well as there were interactions between physical activity frequency and water drinking amount.
 In addition, I found there was nearly no correlation between transportation choice and physical activity, which could answer another question I had.
 At the same time, outside the scope of the problem, I also discovered the interaction between gender and age in this process.
@@ -296,6 +300,9 @@ Although the machine learning models that I used for fitting the dataset are dif
 Considering all the results of performance metrics, I finally chose liner regression model with LASSO regularization with all predictors plus BMI as the outcome.
 The reason was that RMSE calculated of predicted MBI values on testing data split from cleaned dataset was as same as the result when it was trained.
 Also, regularization was applied by LASSO model to reduce overfitting at the same time.
+
+For more detailed information of LASSO model, I took the review advice and tried to extract strongest and weakest coefficient, but the result showed that intercept was both strongest and weakest coefficient.
+I didn't figure out how it could be interpret so it is not included in this part.
 
 ## Strengths and Limitations
 
@@ -311,9 +318,9 @@ The other reason is that BMI was invented based on European white men and didn‚Ä
 So it will be better to take fat content into consideration when doing analysis for obesity.
 But it is not included.
 The difficulty for obtaining fat content might be that it consumes time to measure with specific machine.
-I did tried to do tuning for random forest model but I failed for running it successfully, so this could be a limitation that I have.
+Doing tuning for random forest model has been tried but I failed for running it successfully, so this could be a limitation.
 And maybe there could be more metrics that I can also calculate but I only chose 1 for each model.
-Furthermore, chatGPT told me that even if testing result has a sign for well predicting, there still could be other factors for further assessment such as F1-score and so on.
+Furthermore, chatGPT said that even if testing result has a sign for well predicting, there still could be other factors for further assessment such as F1-score and so on.
 But base on my understanding, I don't know what other methods I could choose from so I just stopped here.
 
 ## Conclusions

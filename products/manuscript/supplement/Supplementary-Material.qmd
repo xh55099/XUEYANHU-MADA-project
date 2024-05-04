@@ -25,37 +25,23 @@ This shows some materials that could go into a supplementary file. Often you wan
 
 For illustrative purposes, I'm doing the supplement as pdf. For this to work, you need a (La)TeX system installed. It's easy. Just follow [these steps](https://quarto.org/docs/output-formats/pdf-basics.html).
 
-
 # Overview
 
 All of the raw data file in csv, processed data in RDS file, descriptive analysis, exploratory analysis,and full data analysis codes and products are included in this project folder.
 
 # Code and file information
 
--   assets: storing reference pdf files and citation style files
-
+-   assets: storing reference pdf files and citation style file
 -   data:
-
     -   raw-data: codebook created by me and original data file downloaded from website
-
-    -   processed-data: cleaned data saved in RDS file
-
+-   processed-data: cleaned data saved in RDS file
 -   products: manuscript in qmd file and its render output with same name in doc file
-
--   R: including all codes needed
-
+-   Rcode: including all codes needed
     -   analysis-code: including codes for simple exploratory analysis and machine learning models fitting both in qmd file and R script file
-
-    -   eda-code: including codes for simple exploratory analysis and machine learning models fitting both in qmd file and R script file
-
-    -   processing-code: including codes for data cleaning process both in qmd and R script file
-
--   renv: storage for all of the packages used in this project in R
-
+    -   dneda-code: including codes for simple exploratory analysis and machine learning models fitting both in qmd file and R script file
+    -   mlmmodel-code: including codes for data cleaning process both in qmd and R script file
 -   results:
-
     -   figures: all of the plots in png file created and saved from eda-code and analysis-code
-
     -   tables: summary tables created and saved from eda-code and 2 linear model tables from analysis-code
 
 {{< pagebreak >}}

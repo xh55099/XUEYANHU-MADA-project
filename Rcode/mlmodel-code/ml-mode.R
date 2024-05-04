@@ -228,29 +228,104 @@ for (i in 1:length(predictors_updated)) {
 print(paste("Best subset of predictors (including interactions) using cross-validation:", paste(bestSubset2, collapse = ", ")))
 print(paste("Lowest RMSE (including interactions) using cross-validation:", minRMSE2))
 
+# Create dummy variables for categorical variables in trainData
+trainData1 <- within(trainData, {
+  History <- as.factor(History)
+  MTRANS <- as.factor(MTRANS)
+})
+dummy_vars_train <- model.matrix(~ History + MTRANS - 1, data = trainData1)
+
+# Combine dummy variables with original trainData
+trainData1 <- cbind(trainData, dummy_vars_train)
+
+# Repeat the same process for testData
+testData1 <- within(testData, {
+  History <- as.factor(History)
+  MTRANS <- as.factor(MTRANS)
+})
+dummy_vars_test <- model.matrix(~ History + MTRANS - 1, data = testData1)
+testData1 <- cbind(testData, dummy_vars_test)
+
+# Define predictors and outcome
+response <- "BMI"
+predictors <- c("Gender", "Age", "History", "Water", "Alcohol", "FAF", "MTRANS")
+interaction_terms <- c("Gender_Age", "FAF_Water")
+
+# Update predictors to include dummy variables
+predictors_lasso <- c("Gender", "Age", "Water", "Alcohol", "FAF","Gender_Age", "FAF_Water", colnames(dummy_vars_train))
+
+
+# Define function to calculate RMSE
+calculate_rmse <- function(predictions, actual) {
+  return(sqrt(mean((actual - predictions)^2)))
+}
+
 # Initialize variables to store results
 min_rmse_lasso <- Inf
 best_subset_lasso <- NULL
 
+# Set seed
+set.seed(123)
+
 # Perform LASSO regression with cross-validation
-lasso_model <- cv.glmnet(as.matrix(trainData[, predictors_updated]), trainData$BMI, alpha = 1, nfolds = 10)
+for (fold in 1:10) {
+  # Extract indices for training and validation data for current fold
+  train_indices <- cv_folds[[fold]]
+  validation_indices <- setdiff(1:nrow(trainData1), train_indices)
+  
+  # Define training and validation data subsets
+  train_data_fold <- trainData1[train_indices, ]
+  validation_data_fold <- trainData1[validation_indices, ]
+  
+  # Create design matrix for training and validation data
+  train_matrix <- model.matrix(~., data = train_data_fold[, predictors_lasso])[,-1]
+  validation_matrix <- model.matrix(~., data = validation_data_fold[, predictors_lasso])[,-1]
+  
+  # Ensure the same variables are present in training and validation matrices
+  common_variables <- intersect(colnames(train_matrix), colnames(validation_matrix))
+  train_matrix <- train_matrix[, common_variables]
+  validation_matrix <- validation_matrix[, common_variables]
+  
+  # Perform LASSO regression with cross-validation
+  lasso_model <- cv.glmnet(train_matrix, train_data_fold$BMI, alpha = 1, lambda = 10^seq(10, -2, length = 100))
+  
+  # Extract optimal lambda value
+  optimal_lambda <- lasso_model$lambda.min
+  
+  # Fit LASSO model using optimal lambda on training data
+  lasso_model_optimal <- glmnet(train_matrix, train_data_fold$BMI, alpha = 1, lambda = optimal_lambda)
+  
+  # Make predictions on validation set
+  predictions_lasso <- predict(lasso_model_optimal, newx = validation_matrix, s = optimal_lambda)
+  
+  # Calculate RMSE on validation set
+  rmse <- sqrt(mean((validation_data_fold$BMI - predictions_lasso)^2))
+  
+  # Update min_rmse and best_subset if CV RMSE is lower
+  if (rmse < min_rmse_lasso) {
+    min_rmse_lasso <- rmse
+    best_subset_lasso <- predictors_lasso  # Include interaction terms
+  }
+}
+
+# Extract non-zero coefficients from the optimal LASSO model
+non_zero_coeffs <- coef(lasso_model_optimal)
+non_zero_coeffs <- non_zero_coeffs[-1]  # Remove intercept
+
+# Find the indices of non-zero coefficients
+non_zero_indices <- which(non_zero_coeffs != 0)
+
+# Extract the names of predictors with non-zero coefficients
+best_subset_names_lasso <- colnames(train_matrix)[non_zero_indices]
 
 # Extract the optimal lambda value
 optimal_lambda <- lasso_model$lambda.min
 
-# Fit the LASSO model using the optimal lambda
-lasso_model_optimal <- glmnet(as.matrix(trainData[, predictors_updated]), trainData$BMI, alpha = 1, lambda = optimal_lambda)
-
-# Compute RMSE on test data using the optimal LASSO model
-predictions_lasso <- predict(lasso_model_optimal, newx = as.matrix(testData[, predictors_updated]))
-rmse_lasso <- sqrt(mean((testData$BMI - predictions_lasso)^2))
-
-# Extract coefficients of the LASSO model
-lasso_coefficients <- as.matrix(coef(lasso_model_optimal))
-
 # Print results
+cat("Lowest RMSE (LASSO CV):", min_rmse_lasso, "\n")
+cat("Best subset of predictors:", paste(best_subset_names_lasso, collapse = ", "), "\n")
+# Print optimal lambda value
 cat("Optimal lambda:", optimal_lambda, "\n")
-cat("RMSE with LASSO:", rmse_lasso, "\n")
 
 # Print non-zero coefficients (selected predictors)
 selected_predictors <- rownames(lasso_coefficients)[lasso_coefficients != 0, drop = FALSE]
@@ -530,13 +605,13 @@ rmse_lm2_test <- sqrt(mean((testData$BMI - predictions_lm2_test)^2))
 print(rmse_lm2_test)
 
 # Fit the LASSO model using the optimal lambda
-lasso_model_optimal <- glmnet(as.matrix(trainData[, predictors_updated]), trainData$BMI, alpha = 1, lambda = 0.0011)
+lasso_model_optimal <- glmnet(as.matrix(trainData1[, predictors_lasso]), trainData1$BMI, alpha = 1, lambda = 0.023)
 
 # Make predictions on the test data using the optimal LASSO model
-predictions_lasso_test <- predict(lasso_model_optimal, newx = as.matrix(testData[, predictors_updated]))
+predictions_lasso_test <- predict(lasso_model_optimal, newx = as.matrix(testData1[, predictors_lasso]))
 
 # Calculate RMSE on the test data
-rmse_lasso_test <- sqrt(mean((testData$BMI - predictions_lasso_test)^2))
+rmse_lasso_test <- sqrt(mean((testData1$BMI - predictions_lasso_test)^2))
 
 # Print RMSE on test data
 print(rmse_lasso_test)
