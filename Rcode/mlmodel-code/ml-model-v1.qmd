@@ -96,6 +96,7 @@ I think it makes a little bit sense to me that there is a connection effect of w
 I haven't include gender or age for model fitting, I will try to combine them in one model here.
 
 ```{r}
+mydata$Gender <- as.factor(mydata$Gender)
 lm4 <- lm(BMI ~ Gender * Age, data = mydata)
 lm4_result <- summary(lm4)
 
